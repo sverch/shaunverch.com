@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Hello World!"
-date:   2018-11-13 13:23:46 -0500
+date:   2018-12-11 16:00:00 -0500
 categories: introduction
 ---
 Welcome to my site!  Up until this post, shaunverch.com was hosted on Digital
@@ -21,8 +21,10 @@ I do know I could use github pages (and I would highly recommend it, it's very
 easy), but the point of this is to get experience using my own project on a real
 system that I actually care about (how bad would it look if I claim to be a Site
 Reliability Engineer but can't even keep my own site running?).  You can find
-the source for this site [here]() and the deployment scripts [here]().
+the source for this site [here](https://github.com/sverch/shaunverch.com/) and
+the deployment scripts
+[here](https://github.com/sverch/shaunverch.com/tree/master/deployment/).
 
 I hope to post here about things that I've learned over the years that might
-actually help people, or at least be interesting.  Feel free to subscribe via
-RSS (TODO: Learn about RSS) if you're interested!
+actually help people, or at least be interesting.  Feel free to [subscribe via
+RSS](/feed.xml) if you're interested!
