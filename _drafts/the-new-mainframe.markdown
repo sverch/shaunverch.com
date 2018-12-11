@@ -4,8 +4,10 @@ title:  "The New Mainframe"
 date:   2018-11-13 13:23:46 -0500
 categories: cloud mainframe vendor-lock-in
 ---
-It's (YEAR), and IBM has just released (MAINFRAME).  The marketing talks about
-how much the mainframe can do and how it is the future (LINK).
+It's 1964, and IBM has just released the System/360:
+https://en.wikipedia.org/wiki/IBM_mainframe#IBM_System/360 (MAINFRAME).  The
+marketing talks about how much the mainframe can do and how it is the future
+https://www.ibm.com/ibm/history/exhibits/mainframe/mainframe_PR360.html.
 
 Well that didn't happen.  It's 2018 and mainframe is synonomous with "old",
 "stuck", and "expensive".  But fortunately we'll learn from our mistakes and not
@@ -49,6 +51,9 @@ which means you'll be paying a lot of money for a long while.  None of it was
 designed to be swapped out because there was never any financial incentive to do
 that.
 
+Note: They are not declining, but this shows the downsides:
+https://www.forbes.com/sites/forbestechcouncil/2018/07/06/guess-what-mainframe-use-is-growing-but-challenges-remain-unsolved/
+
 Even though mainframes are gradually declining (SOURCE), this type of lock-in
 won't go away because it's way too profitable.  Besides the obvious things like
 phones that can only run the operating system made by the company that sells
@@ -68,6 +73,8 @@ yourself.  You bought the machines, but you had to deal with monitoring,
 logging, high availability, security, and everything else that comes with
 deploying software in production.  Then in (YEAR), AWS released their (FIRST
 PRODUCT), and things started to change.
+
+Note the "Amazon Certified Engineer" and how that affects the market.
 
 Now it's 2018, and AWS and Google have (X NUMBER) of proprietary software
 offerings, from load balancers to closed source databases.  These services are
@@ -99,9 +106,9 @@ implement it yourself, and in the end probably understand more about why you
 need it in the first place.
 
 This is why I created a directory of open source equivalents at
-[https://opensourceequivalent.com](https://opensourceequivalent.com).  If you
-see anything wrong there or have any ideas for yourself, please submit a pull
-request!
+[https://getcloudless.com/open-source-equivalents/](https://getcloudless.com/open-source-equivalents/).
+If you see anything wrong there or have any ideas for yourself, please submit a
+pull request!
 
 ## What about Docker/Kubernetes?
 
