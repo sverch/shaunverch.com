@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Here's Some Amtrak
-permalink: /amtrak
+permalink: /amtrak/
 ---
 ## Aug 11: New York, NY to Burlington, VT
 
