@@ -48,7 +48,7 @@ permalink: /amtrak/
 
 - Nov 04 (4:50AM) - Nov 04 (10:55AM): 11 Coast Starlight
 
-## Nov 17: San Francisco, CA to Los Angeles, CA
+## Nov 16: San Francisco, CA to Los Angeles, CA
 
 - Nov 16 (10:07AM) - Nov 16 (9:00PM): 11 Coast Starlight
 
