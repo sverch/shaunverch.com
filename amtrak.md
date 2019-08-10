@@ -19,14 +19,14 @@ permalink: /amtrak/
 
 ## Aug 31: Harrisburg, PA to Kansas City, MO
 
-- Aug 31 (11:59PM) - Sep 01 (8:45AM): 29 Capitol Limited
 - Aug 31 (2:36PM) - Aug 31 (7:59PM): 43 Pennsylvanian
+- Aug 31 (11:59PM) - Sep 01 (8:45AM): 29 Capitol Limited
 - Sep 01 (2:50PM) - Sep 01 (10:00PM): 3 Southwest Chief
 
 ## Sep 15: Kansas City, MO to Boulder, CO
 
-- Sep 15 (4:38PM) - Sep 16 (7:15AM): 5 California Zephyr
 - Sep 15 (7:28AM) - Sep 15 (11:48AM): 4 Southwest Chief
+- Sep 15 (4:38PM) - Sep 16 (7:15AM): 5 California Zephyr
 
 ## Sep 28: Boulder, CO to Salt Lake City, UT
 
