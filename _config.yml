@@ -16,9 +16,8 @@
 title: Shaun Verch (sverch)
 email: shaun@shaunverch.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Hi, I'm Shaun Verch (sverch).  I'm a Site Reliability Engineer/Systems
-  Engineer with experience across a wide range of different organizations.  I'm
-  passionate about Open Source and building software that helps humans.
+  Hi, I'm Shaun Verch (sverch).  I'm an SRE who is passionate about Open Source
+  and building software that helps humans.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://shaunverch.com" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: jekyllrb
