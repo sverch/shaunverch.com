@@ -112,3 +112,18 @@ them are sold out), but I'm keeping an eye out for round 2.
 
 If you have any corrections or ideas, please mail me at
 [youareadumbphone@shaunverch.com](mailto:youareadumbphone@shaunverch.com).
+
+### Update (2019-08-17)
+
+I haven't gotten spammed at all in the past week, and the phone is working great
+as a pager!  I think I was wrong about the calls being spam calls.  Instead, I
+think they were calls from people who were trying to call the previous owner of
+this number.
+
+They seem to have stopped calling after realizing this phone has a new owner, so
+I might be in luck!  One of my friends once had a land line with a phone number
+that was previously owned by very popular belt buckle repair business, so he
+wasn't quite as fortunate.
+
+In the end, the "block all but contacts" feature would still be nice, but this
+experiment may be more successful than I originally thought.
