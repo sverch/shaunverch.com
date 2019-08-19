@@ -127,3 +127,9 @@ wasn't quite as fortunate.
 
 In the end, the "block all but contacts" feature would still be nice, but this
 experiment may be more successful than I originally thought.
+
+### Update (2019-08-19)
+
+Of course right as I say that, I get two spam calls.  So the overall results are
+"mixed" and I would still recommend getting a phone with a "block all but
+contacts" feature.
