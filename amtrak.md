@@ -15,7 +15,7 @@ permalink: /amtrak/
 ## Aug 25: Boston, MA to Harrisburg, PA
 
 - Aug 25 (9:30AM) - Aug 25 (3:34PM): 161 Northeast Regional
-- Aug 25 (4:55PM) - Aug 25 (6:45PM): 667 Keystone Service
+- Aug 25 (4:55PM) - Aug 25 (7:10PM): 667 Keystone Service
 
 ## Aug 31: Harrisburg, PA to Kansas City, MO
 
