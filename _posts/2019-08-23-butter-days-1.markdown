@@ -4,6 +4,8 @@ title:  "Butter Days: Day 1"
 date:   2019-08-23 15:00:00 -0500
 categories: butter open-source
 ---
+This is Day 1 of Butter Days, from Darwin's Ltd. on Mass Ave. in Cambridge, MA.
+
 First of all if you haven't read ["You Can Negotiate a 3-Day
 Weekend"](https://codewithoutrules.com/3dayweekend/), I'd highly recommend it.
 That blog is also just great in general.
