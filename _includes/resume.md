@@ -1,120 +1,66 @@
 Work Experience
 ===============
 
-- **Site Reliability Engineer,** U.S. Digital Service (July 2016 - Present)
-    -   Created roadmap to safely update 17 years of legacy code
-    -   Identified and remediated hundreds of critical security
-        vulnerabilities
-    -   Launched login.gov on AWS, Terraform, and Chef, now supporting 5
-        million users
-    -   Supported quiet launch of qpp.cms.gov across 6 remote DevOps teams
-    -   Built shareable Terraform/Ansible frameworks to reduce error prone
-        duplication
-- **Site Reliablility Engineer,** URX (April 2015 - April 2016)
-    -   Primary maintainer for all of URX's base infrastructure
-    -   Automated deployment using Jenkins, Mesos, AWS, Github and Ansible
-    -   Distributed data pipeline built on HDFS, HBase, Mapreduce, Spark,
-        and Kafka
-    -   Designed and implemented a fully replicated multi-master datacenter
-        setup
-    -   Managed 5+ engineers and 30+ services in zero downtime datacenter
-        upgrade
-    -   Created disaster recovery, incident triage, security, and ownership
-        policies
-- **Platform Software Engineer,** URX (August 2014 - March 2015)
-    -   Created lock free high performance persistent crawler queue
-    -   Worked with Spark based analytics ETL to add support for new
-        datatypes
-- **Database Systems Engineer,** MongoDB (August 2012 - June 2014)
-    -   Core contributor and maintainer of the MongoDB database
-    -   Built C++ dependency analysis tool to untangle massive technical
-        debt
-- **Storage Engineering Intern,** NetApp (June-August 2011, 2012)
-    -   Wrote automation and enhanced SCSI support for NetApp disk arrays
+**Site Reliability Engineer,** Planetscale: January 2019 - Present
+
+-   Automated deployment of Kubernetes, supporting infrastructure on AWS, GCP
+-   Built monitoring stack and trained team in incident response
+-   Defined production readiness, ensured clear product status communication
+
+**Creator,** Cloudless: July 2018 - Present
+
+-   Created Cloudless, a prototype for low level cloud portable deployment
+-   Deployed https://shaunverch.com, https://getcloudless.com using Cloudless
+
+**Site Reliability Engineer,** U.S. Digital Service: July 2016 - July 2018
+
+-   Created roadmap to safely update 17 years of legacy code
+-   Identified and remediated hundreds of critical security vulnerabilities
+-   Launched login.gov on AWS, Terraform, and Chef, now supporting 5 million users
+-   Supported quiet launch of qpp.cms.gov across 6 remote DevOps teams
+
+**Site Reliablility Engineer,** URX: August 2014 - April 2016
+
+-   Designed and implemented a fully replicated multi-master datacenter setup
+-   Managed 5+ engineers and 30+ services in zero downtime datacenter upgrade
+-   Created lock free high performance persistent crawler queue
+
+**Database Systems Engineer,** MongoDB: August 2012 - June 2014
+
+-   Core maintainer, wrote \"willitlink\" to fix massive dependency problems
+
+**Storage Engineering Intern,** NetApp: June-August 2011, 2012
+
+-   Wrote automation and enhanced SCSI support for NetApp disk arrays
 
 Education
 =========
 
-B.S. in Mathematics / Computer Science - Brown University, Providence,
-RI\
-M.Sc. in Computer Science - Brown University, Providence, RI
+- B.S. in Mathematics / Computer Science - Brown University, Providence, RI
+- M.Sc. in Computer Science - Brown University, Providence, RI
 
-Coursework
-==========
+University Coursework
+=====================
 
 Computer Security, Operating Systems, Computer Networks, Algorithms,
 Programming Languages, Embedded Microprocessor Design, Multiprocessor
-Synchronization, Honors Multi Variable Calculus, Honors Linear Algebra,
-Abstract Algebra, Functions of Several Variables, Complex Analysis,
+Synchronization, Abstract Algebra, Real Analysis, Complex Analysis,
 Number Theory, Cryptography
 
 University Projects
 ===================
 
-**Weenix**
-
--   Implemented a small Unix-like operating system
-
--   Transferred Weenix from Xen to an x86 emulator
-
-**Capriccio Threads**
-
--   User-space threads library
-
--   Ported to FreeBSD to use kqueue interface
-
--   Runtime dynamic stack allocation
-
-**TCP over UDP**
-
--   Implemented the TCP/IP protocol using UDP as link layer
-
--   Tested using networks with varying degrees of reliability
-
-Work Experience
-===============
-
-**Software Engineer,** MongoDB, New York, NY Summer 2012 - Present
-
--   Rewrote internal JSON parser
-
--   Implemented native BSON schema to unpack config data and network
-    protocol
-
--   Refactored startup option handling and configuration files
-
-**Intern,** NetApp, Waltham, MA Summer 2011, 2012
-
--   Wrote automated deployment script for wiping and provisioning NetApp
-    systems
-
--   Enabled support for a new aspect of the SCSI protocol (ALUA)
+- **Weenix** - Implemented small Unix-like OS and ported from Xen to x86 emulator
+- **Capriccio Threads** - Experimental work on light weight userspace threads library
+- **TCP over UDP** - Implemented the TCP/IP protocol using UDP as link layer
 
 Teaching Experience
 ===================
 
-**M101JS,** MongoDB, New York, NY
+OSCON, MongoDB Days, Scale 11x, NoSQL Now, M101JS: MongoDB for Node.js
+developers, Operating Systems, Computing, Multivariable Calculus
 
--   Taught Javascript specific portion of MongoDB's Node.js online
-    course
+Software Experience
+===================
 
-**Teaching Assistant,** Brown University, Providence, RI
-
--   Operating Systems, Intro to Computing Systems, Multivariable
-    Calculus
-
-**Conference Sessions and Tutorials,** MongoDB, New York, NY
-
--   OSCON - Zero to Sharded
-
--   MongoDB Days - Sharding, Capacity Planning
-
--   SCALE 11x - Nodestack (MongoDB + Node.js on Joyent Cloud)
-
-Computer Skills
-===============
-
-  -- --------------------------------------------------------------------------------------
-     C, C++, Intel x86 assembly, MIPS assembly, Bash, Perl, Python, Java, Javascript, PHP
-     Linux, FreeBSD, MongoDB, Node.js, V8 Javascript
-  -- --------------------------------------------------------------------------------------
+C, C++, Intel x86 assembly, MIPS assembly, Bash, Perl, Python, Ruby, Java, Scala, Golang, Rust, Javascript, PHP, Linux, FreeBSD, MacOS, MySQL, Vitess, MongoDB, Kafka, Elasticsearch, HBase, HDFS, Ceph, Zookeeper, Hadoop Mapreduce, Apache Spark, AWS, GCP, Ansible, OpenVPN, Bind DNS, LDAP, sssd, Apache Mesos, Jenkins CI, Chef, Terraform, Kubernetes
