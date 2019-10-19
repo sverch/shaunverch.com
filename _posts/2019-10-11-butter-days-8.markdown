@@ -4,7 +4,7 @@ title:  "Butter Days: Day 8"
 date:   2019-10-11 01:00:00 -0500
 categories: butter open-source
 ---
-This is Day 8 of [Butter Days]({% post_url 2019-09-27-butter-days-6 %}), from
+This is Day 8 of [Butter Days]({% post_url 2019-10-04-butter-days-7 %}), from
 Badfish Coffee and Tea in Orangevale, CA.
 
 Last week I got started writing a proxy in Rust that would add the proper
