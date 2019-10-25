@@ -1,0 +1,270 @@
+---
+layout: post
+title:  "Butter Days: Day 10"
+date:   2019-10-25 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 10 of [Butter Days]({% post_url 2019-10-18-butter-days-9 %}), from
+Ada's Technical Books and Cafe in Seattle, WA.
+
+Last week I updated the proxy to work with `https` so that requests coming from
+my laptop are actually secure.
+
+However, because I don't have certificates set up, clients have to ignore
+certificate errors to work with the proxy.  Originally I was thinking I could
+ignore this and keep going, but I think I'm going to bite the bullet and deal
+with it now.  I'll have to do it eventually, and it'll hopefully save me some
+work in trying to figure out how to get all the client libraries to ignore
+certificate errors.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Trusting A Certificate
+
+Before I look into controlling what certificates the proxy presents to the
+client, I want to make sure I know how get all my client applications to trust
+whatever I'm sending them.
+
+[This response](https://unix.stackexchange.com/a/90607) claims that trusting a
+certificate can't easily be done system wide and that each application may be
+configured in its own way.  For example, `curl` has a `--cacert` option for
+this.  Maybe configuring this in the most common SSL libraries (like OpenSSL and
+GnuTLS) will save me from having to figure this out all over again with every
+single language and tool.
+
+Unfortunately, [this page for
+GnuTLS](https://www.gnutls.org/manual/html_node/Verifying-a-certificate-in-the-context-of-TLS-session.html)
+and [this response about OpenSSL](https://stackoverflow.com/a/25169323) make it
+clear that these libraries expect the user to configure trust settings rather
+than being opinionated about trusted cert paths.  That makes sense, but it means
+that I'll have to configure this elsewhere, probably in more platform and
+language specific ways.
+
+I can see that
+[golang](https://forfuncsake.github.io/post/2017/08/trust-extra-ca-cert-in-go-app/),
+[python](https://stackoverflow.com/a/37447847) (ironically the link to the docs
+in that post failed with an SSL error for me), and
+[rust](https://stackoverflow.com/a/43108016) all have ways of trusting custom
+CAs, so I unfortunately have lots of options.
+
+One thing looks promising though.  In the [rust
+version](https://stackoverflow.com/a/43108016) they use
+[`update-ca-certificates`](https://superuser.com/a/719047).  That seems like it
+might be the most standard way to do it, at least for Linux.
+
+I think this is probably actually the way.  I searched for
+"update-ca-certificates mac" to see if it's cross platform and found [this
+gist](https://gist.github.com/epcim/03f66dfa85ad56604c7b8e6df79614e0) which
+shows how to trust certs system wide for a number of different platforms.
+Thanks random internet user!  That's at least a start, and I can dig into the
+docs for each of those commands when I really want to [get serious about
+it](https://www.google.com/search?q=update-ca-certificates+mac).
+
+## Generating A Certificate
+
+From a user experience perspective, I want to automatically generate
+certificates when my proxy starts, and trust those.  This will mean that each
+run of the proxy will have new certificates.
+
+Looks like the rust openssl library has a [builder
+struct](https://docs.rs/openssl/0.10.25/openssl/x509/struct.X509Builder.html)
+that I can hopefully use without too much trouble.  To use that, I added
+`openssl = "0.10"` to my `Cargo.toml`.  The build didn't even have to
+re-download anything, so I was probably pulling in that dependency anyway.
+
+I ended up searching for `x509builder` through all of the rust projects in
+github advanced search, and ended up right back at the [function that the proxy
+library I'm using calls to generate its
+certs](https://github.com/nlevitt/monie/blob/af5f657ab4f8e12680f9473f2d2933d3a6c04e04/src/certauth.rs).
+Now I just have to figure out how to get them.
+
+Well, unfortunately it looks like this proxy generates [certificates on
+demand](https://github.com/nlevitt/monie/blob/af5f657ab4f8e12680f9473f2d2933d3a6c04e04/src/lib.rs#L222)
+to pose as whatever domain the client happens to be requesting since it doesn't
+know up front what domains it will need to impersonate.  That makes sense, but
+I'll definitely have to change that.  I know already that I want to pretend to
+be the AWS endpoints.
+
+I may be able to do something kind of obnoxious to avoid doing the work though.
+It looks like the library [caches the
+certs](https://github.com/nlevitt/monie/blob/af5f657ab4f8e12680f9473f2d2933d3a6c04e04/src/certauth.rs#L67)
+it has already generated.  Maybe if I call that function, capture the result,
+and then output all that information, the library will return the same
+certificate every time that specific domain is requested.  It's worth a try.
+
+Unfortunately, there's no way this will be the full solution, because it
+generates a new cert for every full host, and there are [many AWS service
+endpoints](https://docs.aws.amazon.com/general/latest/gr/rande.html).  I could
+self sign a cert that is valid for [every single
+endpoint](https://en.wikipedia.org/wiki/Subject_Alternative_Name) or do
+something with [wildcards](https://en.wikipedia.org/wiki/Wildcard_certificate),
+but this is starting to seem wrong.
+
+I think the right way to do this is to generate my own Self Signed Certificate
+Authority Certificate, trust it, pass it to the proxy, and have the proxy sign
+all its certificates with my custom CA.  Then I can have it successfully pose as
+AWS and my clients on my system will trust all the certificates it generates in
+the process.
+
+This will require some changes in that proxy library to actually support this.
+
+## Generating A Certificate Authority
+
+All right, so now I'm in the world where I'm trying to create my own self signed
+CA.  This is not where I wanted to be, but I'm here, so let's see where it goes.
+
+First, I can see that the
+[`X509Builder`](https://docs.rs/openssl/0.10.25/openssl/x509/struct.X509Builder.html)
+object that I was using before has no mention of CA certificate.
+
+I know from a random conversation (not satisfying, I know) that CA certificates
+are different from normal certificates because you don't want a random
+compromised certificate to suddenly give an attacker the ability to suddenly
+sign a bunch of other certificates.  [Here's an example from the
+RFC](https://tools.ietf.org/html/rfc5280#section-4.2.1.2) of something that must
+be in CA certificates specifically.
+
+I'm looking around and I see [this code in the `rcgen`
+crate](https://docs.rs/crate/rcgen/0.7.0/source/src/lib.rs) to generate a CA
+certificate, but that code looks a bit scary, and doesn't use what I thought was
+the main rust openssl library.
+
+I don't really want to use some random library here if I can help it, and
+unfortunately I just found [this issue talking about what I assume is the main
+rust openssl library not even having the ability to sign certificates using
+another certificate](https://github.com/sfackler/rust-openssl/issues/345).  That
+might actually kill this.
+
+## Back to Basics
+
+Ultimately, I want to start with something that I know works, and go up from
+there.  This situation right now where everything is wide open and I have no
+starting point isn't great.
+
+Once I have a working example, then I can start to do fancy stuff, like having
+everything auto generated.  Plus, I'll be able to compare what I generate to
+something that I know works, using openssl commands that look something like
+this:
+
+```
+$ echo | openssl s_client -showcerts -servername ec2.us-east-1.amazonaws.com \
+    -connect ec2.amazonaws.com:443 2>/dev/null | \
+    openssl x509 -inform pem -noout -text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            05:25:55:41:4d:3f:5f:80:b1:90:92:d0:e6:98:1a:13
+    Signature Algorithm: sha256WithRSAEncryption
+    ... etc. ...
+            X509v3 Subject Alternative Name: 
+                DNS:ec2.us-east-1.amazonaws.com, DNS:ec2.amazonaws.com, DNS:us-east-1.ec2.amazonaws.com, DNS:*.ec2.us-east-1.vpce.amazonaws.com
+    ... etc. ...
+```
+
+I could actually go through the whole process with the `openssl` tool, but I
+know from experience that's a huge pain with a lot of magic configuration
+options and files everywhere, and I don't wanna.  If I did, [this
+post](https://gist.github.com/Soarez/9688998) actually seems like a great
+example of how.
+
+Instead, I'm going to see if anyone has created tools I can use that will make
+it easier to do this with a sane interface.  I heard about
+[mkcert](https://github.com/FiloSottile/mkcert) and
+[cfssl](https://github.com/cloudflare/cfssl) from friends and previous projects,
+so let's try those.  I also found
+[pkictl](https://github.com/brianclements/pkictl) which looks like it might be
+decent, but it also still looks too openssl.
+
+The mkcert tool looks like it might be a good place to start, because it's meant
+to simplify generating development certificates, and it actually automatically
+trusts the CA that it generates, which saves me some effort.
+
+## Using mkcert
+
+First, let's follow the
+[Quickstart](https://github.com/FiloSottile/mkcert#quickstart):
+
+```
+$ go run github.com/FiloSottile/mkcert -install "*.amazonaws.com" "*.us-east-1.amazonaws.com"
+Using the local CA at "/home/sverch/.local/share/mkcert" ✨
+
+Created a new certificate valid for the following names 📜
+ - "*.amazonaws.com"
+ - "*.us-east-1.amazonaws.com"
+
+Reminder: X.509 wildcards only go one level deep, so this won't match a.b.amazonaws.com ℹ️
+
+The certificate is at "./_wildcard.amazonaws.com+1.pem" and the key at "./_wildcard.amazonaws.com+1-key.pem" ✅
+```
+
+Note, this required root permissions and asked for my root password the first
+time I ran this, but since this code is out in the open I trust that it's
+unlikely to be malicious.  Better than [piping to a
+shell](https://www.seancassidy.me/dont-pipe-to-your-shell.html).
+
+All right, so we have a certificate already!
+
+```
+$ openssl x509 -text -noout -in _wildcard.amazonaws.com+1.pem 
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            b3:ce:48:f4:08:61:b9:50:11:6f:f8:e2:02:02:fd:42
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: O = mkcert development CA, OU = sverch@hawking (Shaun Verch), CN = mkcert sverch@hawking (Shaun Verch)
+        Validity
+            Not Before: Jun  1 00:00:00 2019 GMT
+            Not After : Oct 26 05:29:19 2029 GMT
+        Subject: O = mkcert development certificate, OU = sverch@hawking (Shaun Verch)
+            ... etc. ...
+            X509v3 Subject Alternative Name: 
+                DNS:*.amazonaws.com, DNS:*.us-east-1.amazonaws.com
+            ... etc. ...
+```
+
+Great.  So I have a CA that mkcert installed, and a certificate signed by that
+CA.  Now let's try to shove it into the proxy.
+
+## Adding It To The Proxy
+
+It looks like [this is the line of
+code](https://github.com/nlevitt/monie/blob/8d736a23b53ee27c6c2dd92537c2ae4b36c6fcd2/src/certauth.rs#L73)
+that I would need to change.  Instead of generating a certificate each time, I
+could support passing in a certificate.
+
+Unfortunately, that would require changing the library itself and then pulling
+that into my proxy, and I've run out of time for today.
+
+## Next Time
+
+Well, this was kind of a mess, but I shouldn't be surprised when digging into
+the world of certificates that things get a little crazy.  Here's what I've
+learned:
+
+- There are system wide global trust stores that are mostly standard, and will
+  probably be good enough.  If I find a misbehaving language or tool, I'm okay
+  with dealing with them on a case by case basis.
+- At the very least I want to generate a CA to use to sign my certificates,
+  because I want to trust that CA rather than have everything be self signed.
+- Doing all of this in rust seems like it would be a lot of effort and doesn't
+  have the library support yet.
+- The `mkcert` tool might get me pretty far in the short term.
+- The [proxy library I'm using](https://github.com/nlevitt/monie) will have to
+  be modified to support any of this.
+
+Given all that, I think next time I'll try to modify the proxy library to return
+the certs generated by mkcert, probably by providing an option to use a cert
+file instead of generating its own (then I'm not doing anything mkcert
+specific).  Then, I can quickly test to see if `curl` trusts the certs and I
+don't have to pass `--insecure` anymore, which will at least prove that part is
+hooked up.
+
+At that point I'm free to start actually generating OpenAPI client libraries,
+because I have options to make them trust the cert (if they don't already trust
+it because of the system store).
