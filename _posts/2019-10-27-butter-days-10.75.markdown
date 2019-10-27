@@ -1,0 +1,222 @@
+---
+layout: post
+title:  "Butter Days: Day 10.75"
+date:   2019-10-26 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 10.75 of [Butter Days]({% post_url 2019-10-26-butter-days-10.5 %}),
+from my mate's place again.
+
+I didn't plan to post this, but I wanted to write down my CLI attempts and why
+they have failed so far.  In writing it down though, things actually started to
+make more sense by the end.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## OpenAPI CLI Generator
+
+Now that I've fixed the certificates, I'm trying to use this [OpenAPI CLI
+Generator](https://github.com/danielgtaylor/openapi-cli-generator) project to
+generate a CLI for this API, directly from the openapi spec.
+
+I didn't write this down as I went because I was impatient and was
+intermittently poking around trying to get it working, but here are the
+highlights:
+
+- The [AWS OpenAPI specs that I
+  found](https://github.com/APIs-guru/openapi-directory/blob/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml)
+  are actually swagger 2.0 specs, but the CLI generator takes openapi 3.0 specs.
+  [Apparently openapi 3.0 is just the next version after swagger 2.0, just
+  renamed](https://medium.com/@tgtshanika/open-api-3-0-vs-swagger-2-0-94a80f121022).
+- There are [converters](https://mermade.org.uk/openapi-converter) from the old
+  spec to the new spec that I was able to use successfully.
+- I ran into bad escaping issues, because characters in many of the strings in
+  that spec weren't escaped properly when I tried to load them (e.g.  `\+`
+  should have been `\\+`, etc.).  It's possible that was the 2.0 -> 3.0
+  converter's fault.
+- I also ran into issues where quotes weren't properly closed.  I'm not sure
+  whether this was the 2.0 -> 3.0 conversion's fault or the 3.0 -> golang code
+  generator's fault.
+- The biggest issue, which I'm now stuck on, is that the CLI generator library
+  doesn't support XML, and that's what the AWS API returns.  The issue seems to
+  be that the library is trying to unmarshal XML into a generic
+  `map[string]interface{}` object (a.k.a. map from string to ["holds values of
+  any type"](https://tour.golang.org/methods/14)) but [this doesn't work in
+  golang for
+  xml](https://stackoverflow.com/questions/33548734/ho-to-convert-an-xml-file-to-mapstringinterface-in-golang).
+  In fact it seems like [this is not possible
+  generally](https://groups.google.com/forum/#!topic/golang-nuts/zEmDOp_yFpU/discussion)
+  because XML can have many things in it, like duplicate fields or attributes,
+  that are hard to generically represent in a map.
+
+## XML Woes
+
+Just to see if I can even get something working, I'm going to [autogenerate the
+golang struct needed to store the `ListUsersResponse` XML
+object](https://www.onlinetool.io/xmltogo/).  This is a common thing in golang,
+and it exists for [JSON as well](https://mholt.github.io/json-to-go/).  The idea
+is that you just pass in an XML or JSON object, and it shows you the generated
+golang code that would need to store that object.  Unlike python where you can
+just pull it into a generic map, golang likes to have more structure around how
+things get loaded.
+
+For example, when I pass this object [to the
+converter](https://www.onlinetool.io/xmltogo/):
+
+```xml
+<ListUsersResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+  <ListUsersResult>
+    <IsTruncated>false</IsTruncated>
+    <Users>
+      <member>
+        <Path>/</Path>
+        <PasswordLastUsed>2019-08-31T04:27:09Z</PasswordLastUsed>
+        <Arn>arn:aws:iam::000000000000:user/shaun.verch</Arn>
+        <UserName>shaun.verch</UserName>
+        <UserId>AAAAAAAAAAAAAAAAAAAAA</UserId>
+        <CreateDate>2017-09-26T21:42:46Z</CreateDate>
+      </member>
+    </Users>
+  </ListUsersResult>
+  <ResponseMetadata>
+    <RequestId>47a297d4-ebe2-4d1e-b636-2d4a3d0b7318</RequestId>
+  </ResponseMetadata>
+</ListUsersResponse>
+```
+
+I get this code:
+
+```golang
+type ListUsersResponse struct {
+	XMLName         xml.Name `xml:"ListUsersResponse"`
+	Text            string   `xml:",chardata"`
+	Xmlns           string   `xml:"xmlns,attr"`
+	ListUsersResult struct {
+		Text        string `xml:",chardata"`
+		IsTruncated string `xml:"IsTruncated"`
+		Users       struct {
+			Text   string `xml:",chardata"`
+			Member struct {
+				Text             string `xml:",chardata"`
+				Path             string `xml:"Path"`
+				PasswordLastUsed string `xml:"PasswordLastUsed"`
+				Arn              string `xml:"Arn"`
+				UserName         string `xml:"UserName"`
+				UserId           string `xml:"UserId"`
+				CreateDate       string `xml:"CreateDate"`
+			} `xml:"member"`
+		} `xml:"Users"`
+	} `xml:"ListUsersResult"`
+	ResponseMetadata struct {
+		Text      string `xml:",chardata"`
+		RequestId string `xml:"RequestId"`
+	} `xml:"ResponseMetadata"`
+}
+```
+
+Let's just shove that into the code that was generated by that CLI library and
+see if it even works.  If it does, I might be able to use the XML to golang
+struct generator in the CLI generator to actually get the whole thing working
+with XML, since the openapi spec has the structure of this response in it.
+
+## Getting One Response Working
+
+Now that I have the generated struct, I want to get the CLI library using it.
+
+I changed a line that looked like:
+
+```golang
+var decoded map[string]interface{}
+```
+
+To:
+
+```golang
+var decoded ListUsersResponse
+```
+
+This is really all it takes because the function that takes the `decoded` object
+takes an `interface{}`, which means "any type that you pass it", and the type
+system works out the rest.  I had a few compiler errors that I had to fix, but
+after that I ran the cli and got this!
+
+```
+$ env HTTPS_PROXY=http://localhost:8080/ ./main  get-listusers ListUsers 2010-05-08
+{
+  "XMLName": {
+    "Space": "https://iam.amazonaws.com/doc/2010-05-08/",
+    "Local": "ListUsersResponse"
+  },
+  "Text": "\n  \n  \n",
+  "Xmlns": "https://iam.amazonaws.com/doc/2010-05-08/",
+  "ListUsersResult": {
+    "Text": "\n    \n    \n  ",
+    "IsTruncated": "false",
+    "Users": {
+      "Text": "\n      \n    ",
+      "Member": {
+        "Text": "\n        \n        \n        \n        \n        \n        \n      ",
+        "Path": "/",
+        "PasswordLastUsed": "2019-08-31T04:27:09Z",
+        "Arn": "arn:aws:iam::000000000000:user/shaun.verch",
+        "UserName": "shaun.verch",
+        "UserId": "AAAAAAAAAAAAAAAAAAAAA",
+        "CreateDate": "2017-09-26T21:42:46Z"
+      }
+    }
+  },
+  "ResponseMetadata": {
+    "Text": "\n    \n  ",
+    "RequestId": "cacfc5fe-f397-4aed-97f7-2c5cd588cac2"
+  }
+}
+```
+
+Nice!  The interface is a bit ugly, but it works!  Now I'm querying the AWS API
+with completely auto generated code, which means that any effort I put in to fix
+this interface will immediately work (hopefully) with all the endpoints instead
+of just one.
+
+## Why Do Any Of This?
+
+As one engineer working on this without the resources of an entire multi-billion
+dollar mega corporation, this is pretty important.  AWS has [over a hundred
+different services](https://www.quora.com/How-many-AWS-services-are-there).  The
+IAM service alone (which admittedly is one of the more complex services) has 140
+subcommands according to the aws cli.  That means there are on the order of a
+thousand different commands, so there is no hope of keeping up without some
+autogeneration.
+
+I know that many libraries, such as the `boto` AWS client for python, [are
+already autogenerated in a large
+part](https://github.com/boto/botocore/tree/develop/botocore/data) from some
+kind of spec.  However, as far as I know they are AWS specific formats, so each
+library and language would have to implement special parsing for it to work.
+
+## Next Time
+
+I've officially proven that I can use the OpenAPI spec to interact with the AWS
+API.  Now, let's refocus on the main goal.
+
+I want a tool that can dump the current state of IAM (and eventually my entire
+AWS account).  That goes back to the [original motivation for doing this]({%
+post_url 2019-08-23-butter-days-1 %}), where I want to alert on certain things
+about my account being misconfigured.
+
+So what's the best way to do that?  Well, first I should generate a client for
+AWS, instead of using this CLI library.  That was fun, but my autogenerated code
+will be generated against the actual library functions, not the CLI.
+
+I'm going to generate a rust `reqwest` based library with the
+[openapi-generator](https://github.com/OpenAPITools/openapi-generator), see what
+that looks like, and see if I can auto generate the functions to dump the
+account state.
+
+I also want to look into generating a fake "schema" of the cloud provider based
+on the response and request formats.  For example, if I know what "ListUsers"
+returns, I can maybe formulate an idea of what the "Users" collection contains
+in it.
