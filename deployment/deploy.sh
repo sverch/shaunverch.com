@@ -13,4 +13,4 @@ echo "Old Service: ${OTHER_SERVICE}"
 pipenv run python example-static-site/helpers/update_dns.py shaunverch.com "${PUBLIC_IP}" --subdomain gce
 pipenv run python example-static-site/helpers/update_dns.py shaunverch.com "${OLD_PUBLIC_IP}" --subdomain gce --remove
 echo "When dns settles:"
-echo "cldls service destroy shaunverch-site ${OTHER_SERVICE}"
+echo "pipenv run cldls service destroy shaunverch-site ${OTHER_SERVICE}"
