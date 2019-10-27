@@ -1,0 +1,108 @@
+---
+layout: post
+title:  "Butter Days: Day 10.5"
+date:   2019-10-26 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 10.5 of [Butter Days]({% post_url 2019-10-25-butter-days-10 %}),
+from my mate's place.
+
+I managed to find a solution to the certificate issues that at least works well
+enough for now, so I wanted to quickly write it up.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## mkcert
+
+First of all, this [`mkcert`](https://github.com/FiloSottile/mkcert) tool is
+amazing.  You should try it.  Go ahead, I'll wait.
+
+The quickstart is just one command, if you have an updated version of `go`:
+
+```
+go run github.com/FiloSottile/mkcert -install example.com "*.example.com"
+```
+
+That's it.  Now you have a self signed cert trusted by your system that's valid
+for `example.com` and `*.example.com`.  So easy.  This could be much more
+horrible, as [yesterday's post]({% post_url 2019-10-25-butter-days-10 %})
+hopefully made clear.
+
+At this point, all I needed to do was get the proxy to serve it up.
+
+## Serving It From The Proxy Library
+
+I struggled for a bit figuring out how to pass it in, because the way the proxy
+hooks into hyper is a bit odd to me.  It's one of those situations where the
+user (me) isn't calling the constructor of the object that would need to get the
+certificate paths.  Instead, it's called by some internal hyper code, which I
+can't control.
+
+Rather than try to fight this, I just decided to have it read some environment
+variables.  [Here's the pull request for
+that](https://github.com/nlevitt/monie/pull/4).
+
+As an aside, the way I tested this was to run `cargo run --example noop` to run
+the provided [noop
+example](https://github.com/nlevitt/monie/blob/master/examples/noop.rs) that
+does nothing but terminate the connection and pass the request through
+unmodified.  That was ideal for testing that I didn't get any certificate
+errors.  It was pretty handy, and also neat that examples are so easy to run in
+rust, and seem to be a built in concept.
+
+## Adding It To My Project
+
+Once that was done, all I needed to do was pull in the new proxy library.  I
+also created a wrapper script to run `mkcert` and set everything up properly.
+
+I had to run an `openssl` command to get the private key into the right format
+(there are so many key formats, it's crazy.  I just figured out what key was
+needed by comparing it to the [example I copied the key reading code
+from](https://github.com/ctz/hyper-rustls/tree/master/examples)).
+
+Now it's done!  [Here's the pull
+request](https://github.com/sverch/aws-signature-proxy/pull/3).
+
+```
+$ https_proxy=127.0.0.1:8080 \
+    curl -s \
+    "https://iam.amazonaws.com?Action=ListUsers&Version=2010-05-08" \
+    | xq .
+{
+  "ListUsersResponse": {
+    "@xmlns": "https://iam.amazonaws.com/doc/2010-05-08/",
+    "ListUsersResult": {
+      "IsTruncated": "false",
+      "Users": {
+        "member": {
+          "Path": "/",
+          "PasswordLastUsed": "2019-08-31T04:27:09Z",
+          "UserName": "shaun.verch",
+          "Arn": "arn:aws:iam::000000000000:user/shaun.verch",
+          "UserId": "AAAAAAAAAAAAAAAAAAAAA",
+          "CreateDate": "2017-09-26T21:42:46Z"
+        }
+      }
+    },
+    "ResponseMetadata": {
+      "RequestId": "9c75b38b-e482-4c32-a60f-606cb541c7fe"
+    }
+  }
+}
+```
+
+Awesome.  No more `--insecure`!
+
+## Next Time
+
+This was the last piece I needed to start using standard libraries with the
+proxy without any errors.
+
+Now I want to finally start generating some OpenAPI clients and see how far I
+can get.  Remember, the entire point of this is to dump information from my AWS
+account, so once I auto generate the OpenAPI clients I can hopefully also auto
+generate the code that dumps the current state of my account.

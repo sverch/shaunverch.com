@@ -20,6 +20,10 @@ certificate errors.
 See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
 on what I'm ultimately trying to build.
 
+UPDATE: This post is mostly about all the walls I ran into, but in [Butter Days
+10.5]({% post_url 2019-10-26-butter-days-10.5 %}) I was actually able to get
+something working based on what I learned here.
+
 <hr>
 <br>
 
