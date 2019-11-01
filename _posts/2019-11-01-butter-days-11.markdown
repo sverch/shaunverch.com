@@ -1,0 +1,146 @@
+---
+layout: post
+title:  "Butter Days: Day 11"
+date:   2019-11-01 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 11 of [Butter Days]({% post_url 2019-10-27-butter-days-10.75 %}),
+from Naked Lounge in Chico, CA.
+
+I have very limited time, so today I'm just going to do something as small as
+possible.  I'm going to try to generate a rust client library and use it to send
+one request to AWS.  That's it.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## OpenAPI Generator
+
+Now I'm going to back to the [openapi
+generator](https://github.com/OpenAPITools/openapi-generator/) to generate a
+rust client library.
+
+Remember from [Day 6]({% post_url 2019-09-27-butter-days-6 %}) that this was my
+incantation to generate a client library for the petstore:
+
+```shell
+docker run --rm -v ${PWD}:/local/out/rust/ openapitools/openapi-generator-cli generate \
+    -i http://petstore.swagger.io/v2/swagger.json \
+    -g rust \
+    -o /local/out/rust/generated \
+    --additional-properties packageName=petstore_client --library=reqwest
+```
+
+Now let's try it with the [AWS Swagger
+Definition](https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml):
+
+```shell
+docker run --rm -v ${PWD}:/local/out/rust/ openapitools/openapi-generator-cli generate \
+    -i https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml \
+    -g rust \
+    -o /local/out/rust/generated \
+    --additional-properties packageName=aws_iam_client --library=reqwest
+```
+
+Then I get this output:
+
+```
+Exception in thread "main" org.openapitools.codegen.SpecValidationException: There were issues with the specification. The option can be disabled via validateSpec (Maven/Gradle) or --skip-validate-spec (CLI).
+ | Error count: 1, Warning count: 165
+Errors: 
+	-attribute info.contact.x-twitter is unexpected
+Warnings: 
+	-attribute info.contact.x-twitter is unexpected
+
+	at org.openapitools.codegen.config.CodegenConfigurator.toContext(CodegenConfigurator.java:424)
+	at org.openapitools.codegen.config.CodegenConfigurator.toClientOptInput(CodegenConfigurator.java:453)
+	at org.openapitools.codegen.cmd.Generate.run(Generate.java:407)
+	at org.openapitools.codegen.OpenAPIGenerator.main(OpenAPIGenerator.java:60)
+```
+
+Looks like the spec has errors.  Not a huge shock.  I doubt anyone has used it
+before.  Let's try passing `--skip-validate-spec` like the error message
+suggests.
+
+It generates now, but I have a feeling it's not going to work.  Let's try
+importing it into my top level `Cargo.toml` and building it:
+
+```
+$ cargo build
+... (many, many errors) ...
+error[E0369]: binary operation `!=` cannot be applied to type `models::status_type::StatusType`
+  --> generated/src/models/update_ssh_public_key_request.rs:20:5
+   |
+20 |     pub status: crate::models::StatusType,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: an implementation of `std::cmp::PartialEq` might be missing for `models::status_type::StatusType`
+
+```
+
+Well, I get a ton of errors like this!  Most of them look similar though, so
+maybe I can actually fix this `PartialEq` issue and get it building.
+
+I see that `StatusType` is defined like this:
+
+```rust
+/// 
+#[derive(Debug, Serialize, Deserialize)]
+pub enum StatusType {
+    #[serde(rename = "Active")]
+    Active,
+    #[serde(rename = "Inactive")]
+    Inactive,
+
+}
+```
+
+From [this stackoverflow post](https://stackoverflow.com/a/36297596) it looks
+like I can just add `PartialEq` into the `derive` statement and it should just
+work.  Let's see...
+
+Well, I got different errors!  Looks like there are many other types with that
+problem, so maybe I can fix them all with this change.  Seems like something
+that might be esay to add to the generator.
+
+Unfortunately, now I can see what looks like another problem:
+
+```
+fn p_ost_add_client_id_to_open_id_connect_provider(
+    &self, ... UNKNOWN_BASE_TYPE: crate::models::UNKNOWN_BASE_TYPE,
+    x_amz_content_sha256: &str, ...)
+```
+
+This doesn't seem good, and I'm getting `UNKNOWN_BASE_TYPE` not found errors.
+It looks like the generator failed there, and I'm not sure why.  I'll have to
+actually look at the generator to see where the `UNKNOWN_BASE_TYPE` string comes
+from.
+
+At first I thought it might be getting confused by the [`$ref`
+keyword](https://swagger.io/docs/specification/using-ref/), but when I run `curl
+-o - http://petstore.swagger.io/v2/swagger.json | grep "\$ref"` it looks like
+the petstore definition has it too, and I didn't have the same problems with
+that.
+
+## Next Time
+
+I wasn't kidding when I said I didn't have much time today.
+
+The next few weeks I'm going to be pretty busy preparing for
+[Kubecon](https://events19.linuxfoundation.org/events/kubecon-cloudnativecon-north-america-2019/),
+but I'll try to at least do something small.
+
+From what I did today, I learned that:
+
+1. According to openapi-generator, the spec is invalid.
+2. The rust code generator isn't happy with the spec.
+3. The rust code generator may need some other updates.
+
+Given that, next time the first order of business is to try to figure out what
+is wrong with the spec and get it to the point where `openapi-generator` is
+happy with it.  At that point, maybe I can submit a PR to [the project that
+generated this spec](https://github.com/APIs-guru/aws2openapi) and also add some
+more validation tests.
