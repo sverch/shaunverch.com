@@ -1,0 +1,328 @@
+---
+layout: post
+title:  "Butter Days: Day 12"
+date:   2019-11-08 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 12 of [Butter Days]({% post_url 2019-11-01-butter-days-11 %}), from
+Dana Street Roasting Company in Mountain View, CA.
+
+I unfortunately have very limited time today as well, so I'm going to really try
+to pick something tiny.
+
+Last week I tried to generate an openapi from the [AWS Swagger
+Definition](https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml),
+but the [openapi generator](https://github.com/OpenAPITools/openapi-generator/)
+complained with spec errors.  This week I'm going to just try to fix that spec
+so it's actually in the correct format.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Baseline On The Generator
+
+There is a [generator](https://github.com/APIs-guru/aws2openapi) that was used
+to generate the [AWS openapi
+definitions](https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/), but I have no idea what state it's in.
+
+Before I do anything else, I'm just going to run it with no modifications, just
+to see if it even works.
+
+```
+$ git clone git@github.com:APIs-guru/aws2openapi.git
+Cloning into 'aws2openapi'...
+remote: Enumerating objects: 4, done.
+remote: Counting objects: 100% (4/4), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 330 (delta 0), reused 0 (delta 0), pack-reused 326
+Receiving objects: 100% (330/330), 193.50 KiB | 1.23 MiB/s, done.
+Resolving deltas: 100% (197/197), done.
+```
+
+The current README doesn't show usage, so I have to look in the code itself.  I
+see [this update
+script](https://github.com/APIs-guru/aws2openapi/blob/master/update.sh) which
+looks like it just assumes certain repos are checked out in the same directory
+as the generator itself, because all the paths are relative.  Let's check those
+out:
+
+```
+$ git clone git@github.com:aws/aws-sdk-js.git
+Cloning into 'aws-sdk-js'...
+remote: Enumerating objects: 170, done.
+remote: Counting objects: 100% (170/170), done.
+remote: Compressing objects: 100% (130/130), done.
+remote: Total 45717 (delta 96), reused 84 (delta 40), pack-reused 45547
+Receiving objects: 100% (45717/45717), 126.32 MiB | 4.05 MiB/s, done.
+Resolving deltas: 100% (33721/33721), done.
+$ git clone git@github.com:APIs-guru/openapi-directory.git
+fatal: destination path 'openapi-directory' already exists and is not an empty directory.
+```
+
+All right, now let's try blindly running that script:
+
+```
+$ ./update.sh 
+Already up to date.
+Current branch master is up to date.
+module.js:550
+    throw err;
+    ^
+
+Error: Cannot find module 'recursive-readdir'
+    at Function.Module._resolveFilename (module.js:548:15)
+    at Function.Module._load (module.js:475:25)
+    at Module.require (module.js:597:17)
+    at require (internal/module.js:11:18)
+    at Object.<anonymous> (/home/sverch/projects/aws2openapi/getPreferred.js:5:12)
+    at Module._compile (module.js:653:30)
+    at Object.Module._extensions..js (module.js:664:10)
+    at Module.load (module.js:566:32)
+    at tryModuleLoad (module.js:506:12)
+    at Function.Module._load (module.js:498:3)
+module.js:550
+    throw err;
+    ^
+
+Error: Cannot find module 'swagger-parser'
+    at Function.Module._resolveFilename (module.js:548:15)
+    at Function.Module._load (module.js:475:25)
+    at Module.require (module.js:597:17)
+    at require (internal/module.js:11:18)
+    at Object.<anonymous> (/home/sverch/projects/aws2openapi/aws2openapi.js:5:23)
+    at Module._compile (module.js:653:30)
+    at Object.Module._extensions..js (module.js:664:10)
+    at Module.load (module.js:566:32)
+    at tryModuleLoad (module.js:506:12)
+    at Function.Module._load (module.js:498:3)
+
+```
+
+Since I've used [Node.js](https://nodejs.org/en/) before, I know that I need to
+use [npm](https://www.npmjs.com/) ("Node Package Manager") to install things.
+That helps because this project had no usage.
+
+```
+$ npm install
+added 83 packages from 42 contributors and audited 99 packages in 2.495s
+found 1 high severity vulnerability
+  run `npm audit fix` to fix them, or `npm audit` for details
+```
+
+Well, I guess this hasn't been updated for a while, although it's nice that
+`npm` has this warning.  Let's see what the issue is.
+
+```
+$ npm audit
+                                                                                
+                       === npm audit security report ===                        
+                                                                                
+# Run  npm update lodash --depth 1  to resolve 1 vulnerability
+┌───────────────┬──────────────────────────────────────────────────────────────┐
+│ High          │ Prototype Pollution                                          │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Package       │ lodash                                                       │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Dependency of │ lodash                                                       │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ Path          │ lodash                                                       │
+├───────────────┼──────────────────────────────────────────────────────────────┤
+│ More info     │ https://nodesecurity.io/advisories/1065                      │
+└───────────────┴──────────────────────────────────────────────────────────────┘
+
+
+found 1 high severity vulnerability in 99 scanned packages
+  run `npm audit fix` to fix 1 of them.
+```
+
+Ok, so I want to fix this, but I also want to run this exactly how it was run
+before, so I think I'll skip it for now.  Plus, I [checked the vulnerability
+link](https://www.npmjs.com/advisories/1065) and I don't think it applies to me,
+especially because I'm not exposing anything on the internet or feeding it
+untrusted input.
+
+Let's see what happens now:
+
+```
+$ ./update.sh 
+Already up to date.
+Current branch master is up to date.
+/home/sverch/projects/aws-sdk-js/apis/AWSMigrationHub-2017-05-31.normal.json
+  Has paginators
+  Has examples version 1.0
+
+...
+
+/home/sverch/projects/aws-sdk-js/apis/xray-2016-04-12.normal.json
+  Has paginators
+  Has examples version 1.0
+{"serviceName":"AWSMigrationHub","versions":[],"preferred":"2017-05-31"}
+
+...
+
+{"serviceName":"xray","versions":[],"preferred":"2016-04-12"}
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: unable to auto-detect email address (got 'sverch@hawking.(none)')
+fatal: You didn't specify any refspecs to push, and push.default is "nothing".
+```
+
+I wasn't really paying attention, but I guess this script is trying to commit
+something.  It looks like it pushes to github after the generation, so I can
+still see what it generated before it failed:
+
+```
+cd ../openapi-directory
+git diff
+... lots of stuff ...
+```
+
+Well, that's not good.  I would have hoped to get the same result.
+
+This is not a shock though.  What's happening here is that the converter is
+using the internal service definitions from the `aws-sdk-js` library, but it's
+not pinning any version so that library has definitely been updated since the
+last run.
+
+Well, I can figure this out though.  All I have to do is loop through all the
+commits and diff the output.  I can do this with something like:
+
+```bash
+if [ "$(git diff)" = "" ]; then
+    ...
+fi
+```
+
+Let's try that.  First of all, I'm going to clean up the `update.sh` script,
+basically removing the relative paths because that was surprising and fixing
+[shellcheck errors](https://github.com/koalaman/shellcheck).  Shellcheck is
+amazing if you have never heard of it.  The script looks like this now:
+
+```bash
+#!/bin/bash
+
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+
+NUM_ARGS_REQUIRED=1
+if [ $# -ne "${NUM_ARGS_REQUIRED}" ]; then
+    cat <<EOF
+Usage: $0 <aws-sdk-js-version>
+
+    Update to pinned aws-sdk-js version.
+
+EOF
+    exit 1
+fi
+COMMIT=$1
+
+run () {
+    echo "+" "$@" 1>&2
+    "$@"
+}
+
+SCRIPT_DIR="$(dirname "$0")"
+
+if [ ! -d "${SCRIPT_DIR}/aws-sdk-js" ]; then
+    run git clone https://github.com/aws/aws-sdk-js
+fi
+
+if [ ! -d "${SCRIPT_DIR}/openapi-directory" ]; then
+    run git clone https://github.com/APIs-guru/openapi-directory
+fi
+
+pushd "${SCRIPT_DIR}/aws-sdk-js" || exit
+git checkout master
+git checkout "${COMMIT}"
+popd
+
+pushd "${SCRIPT_DIR}/openapi-directory" || exit
+git checkout master
+git checkout .
+popd
+
+node getPreferred "${SCRIPT_DIR}/aws-sdk-js/apis"
+node aws2openapi "${SCRIPT_DIR}/aws-sdk-js/apis" \
+    "${SCRIPT_DIR}/openapi-directory/APIs/amazonaws.com" -y
+```
+
+Now it should do the same thing every time.  Let's create a wrapper to go back
+until there's no diff:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+echo "Running search for commit"
+for i in $(seq 0 200); do
+    echo "Running search for commit at HEAD~$i"
+    ./update.sh "HEAD~$i"
+    pushd openapi-directory || exit
+    if [[ $(git status) == *"working tree clean"* ]]; then
+        echo "found commit!"
+        exit
+    fi
+    popd
+done
+```
+
+I'm using git status and [checking if the output contains the right
+string](https://stackoverflow.com/a/229606) instead of git diff because that
+seemed more accurate.
+
+It's important that this is automated because this code is very slow.  I'm
+hoping this can get me to the commit all this was actually generated from.
+
+Actually, since the code is so slow, I'm going to first just look at the last
+commit to the openapi directory, to roughly get the right date range.
+
+Wow, from the current head of the openapi tree, I see [this
+commit](https://github.com/APIs-guru/openapi-directory/commit/bfcf696428c8f5cb7435c20a808f046065569495)
+which has the text "Update AWS APIs to v2.561.0".  Let's see if that's a tag in
+the javascript sdk.
+
+Sure enough, [here it
+is](https://github.com/aws/aws-sdk-js/releases/tag/v2.561.0).  Let's see if
+running my new update script against that tag generates the same configuration.
+
+```
+./update.sh v2.561.0
+...
+cd openapi-directory
+git diff
+... (no output!) ...
+```
+
+Great!  So I've now actually been able to reproduce the behavior exactly that
+generated the existing master.  This may not seem like much, but it means that I
+will absolutely know which problems are because of my changes and which problems
+are because I've simply misconfigured something or built against the wrong
+version.
+
+## Next Time
+
+Like I said, I didn't have much time today, but I wanted to at least make some
+progress.
+
+Next time I'll probably continue this, first running current master of the
+openapi directory through a validator, and then running whatever generated
+openapi spec comes from the latest master of `aws-sdk-js` through a validator.
+From there I can understand more what exactly is invalid about these specs, and
+what needs to fixed about the generator to make them valid.
+
+Plus, I can fix that security issue, and if it creates a diff in the generated
+output I'll know it was because of the package update and not because the
+project was totally broken in the first place.
