@@ -1,0 +1,143 @@
+---
+layout: post
+title:  "Butter Days: Day 13"
+date:   2019-11-15 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 13 of [Butter Days]({% post_url 2019-11-08-butter-days-12 %}), from
+Il Piccolo Caffe in Burlingame, CA.
+
+All right, this is the last day that I'll have such limited time hopefully, but
+we'll do what we can.
+
+Last week I ran the [aws2openapi
+generator](https://github.com/APIs-guru/aws2openapi) and got it to the point
+where I could generate the same specs that are on current master.  That will
+allow me to change it incrementally and know what I've changed.
+
+This week I'm going to pass the current specs in the [openapi
+directory](https://github.com/APIs-guru/openapi-directory) through a validator
+to see what happens.  Then I'll probably rerun the command that generated those
+specs on a more recent version of the AWS API and run through those a validator
+as well.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Current Master
+
+Just to see where we are, let's try to run an openapi validator on current
+master.
+
+First, just to clarify [the difference between swagger and
+openapi](https://swagger.io/blog/api-strategy/difference-between-swagger-and-openapi/)
+is that OpenAPI is the spec and swagger is the tools ecosystem.  The OpenAPI
+spec was donated to the OpenAPI initiative by a company called SmartBear
+Software.  Before OpenAPI 3.0, the spec itself was also called swagger.
+
+The AWS specs in the [openapi
+directory](https://github.com/APIs-guru/openapi-directory) have `swagger: '2.0'`
+at the top, so they are on the version from before the rename, and that's the
+validator I'm looking for.
+
+The [google compute
+specs](https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/googleapis.com/compute/v1/swagger.yaml)
+are also on swagger 2.0, so it's not just the AWS specs.
+
+I'm going to use this
+[swagger-parser](https://github.com/APIDevTools/swagger-parser) project because
+it says its a "Swagger 2.0 and OpenAPI 3.0 parser/validator"
+
+It's also [hosted online](https://apitools.dev/swagger-parser/online/) so I can
+just post the URL to the AWS spec and see what happens.
+
+Unfortunately it passed validation.  I guess I say unfortunately because it
+means that the openapi-generator is failing for different reasons, and doesn't
+quite match the checks in the swagger 2.0 validator.  At least I know the spec
+is valid though, so now I just need to figure out what's wrong with the
+generator.
+
+## Trying The Openapi Generator
+
+Last time I hit this error and just skipped the spec validation.
+
+```
+$ docker run --rm -v ${PWD}:/local/out/rust/ openapitools/openapi-generator-cli generate     -i https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml     -g rust     -o /local/out/rust/generated     --additional-properties packageName=aws_iam_client --library=reqwest
+Exception in thread "main" org.openapitools.codegen.SpecValidationException: There were issues with the specification. The option can be disabled via validateSpec (Maven/Gradle) or --skip-validate-spec (CLI).
+ | Error count: 1, Warning count: 165
+Errors:
+	-attribute info.contact.x-twitter is unexpected
+Warnings:
+	-attribute info.contact.x-twitter is unexpected
+
+	at org.openapitools.codegen.config.CodegenConfigurator.toContext(CodegenConfigurator.java:424)
+	at org.openapitools.codegen.config.CodegenConfigurator.toClientOptInput(CodegenConfigurator.java:453)
+	at org.openapitools.codegen.cmd.Generate.run(Generate.java:407)
+	at org.openapitools.codegen.OpenAPIGenerator.main(OpenAPIGenerator.java:60)
+```
+
+This time let's try to actually understand it.
+
+Well, it turns out all I had to do was look.  It looks like the `aws2openapi`
+author is injecting their twitter info into `contact`.
+
+```
+  contact:
+    name: Mike Ralphson
+    email: mike.ralphson@gmail.com
+    url: 'https://github.com/mermade/aws2openapi'
+    x-twitter: PermittedSoc
+```
+
+Sure enough [here it
+is](https://github.com/APIs-guru/aws2openapi/blob/master/index.js#L779).  I'm
+just going to comment that out and rerun the generator.
+
+After rerunning the generator and going into the directory with the swagger.yaml
+in it:
+
+```
+docker run --rm -v ${PWD}:/local/out/rust/ \
+    openapitools/openapi-generator-cli generate \
+    -i /local/out/rust/swagger.yaml -g rust \
+    -o /local/out/rust/generated \
+    --additional-properties packageName=aws_iam_client \
+    --library=reqwest
+```
+
+I get a lot of warnings like this:
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+```
+
+And this:
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - The following schema has undefined (null) baseType. It could be due to form parameter defined in OpenAPI v2 spec with incorrect consumes. A correct 'consumes' for form parameters should be 'application/x-www-form-urlencoded' or 'multipart/?'
+```
+
+And this:
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - schema: class Schema {
+    type: null
+    format: null
+... more object ...
+```
+
+So I've gotten rid of the error, but these warnings are clearly the problem I
+had from last time, specifically the `UNKNOWN_BASE_TYPE` warning.  That breaks
+the generated code.
+
+## Next Time
+
+Unfortunately, once again I don't have a ton of time, but after Kubecon next
+week things should be a bit easier.
+
+Next time my goal is to get this generator working with this spec, which is just
+going to be a lot of debugging why it's printing these warnings.  At least I
+have a starting point.
