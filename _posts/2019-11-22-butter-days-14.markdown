@@ -1,0 +1,350 @@
+---
+layout: post
+title:  "Butter Days: Day 14"
+date:   2019-11-22 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 14 of [Butter Days]({% post_url 2019-11-15-butter-days-13 %}), from
+Achilles Coffee Roasters on Cortez Hill in Sandiego, CA.
+
+This week I have slightly more time, but still only a couple hours because I'll
+be on a train soon.
+
+This week I'm going to try to go through the warnings that the [openapi
+generator](https://github.com/OpenAPITools/openapi-generator/) gives me about
+the [AWS Swagger
+Definition](https://raw.githubusercontent.com/APIs-guru/openapi-directory/master/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml)
+one by one, and try to fix as many as I can.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Testing Flow
+
+Before I do anything, I want a quick way to test any changes I make to see if
+they made a difference.  First, here's a quick script to wrap the
+openapi-generator docker command that I've been using to generate the rust code:
+
+```bash
+#!/bin/bash
+
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+
+NUM_ARGS_REQUIRED=1
+if [ $# -ne "${NUM_ARGS_REQUIRED}" ]; then
+    cat <<EOF
+Usage: $0 <openapi-directory>
+
+    Try to generate IAM from openapi directory.
+
+EOF
+    exit 1
+fi
+
+run () {
+    echo "+" "$@" 1>&2
+    "$@"
+}
+
+OPENAPI_DIRECTORY=$1
+
+pushd "${OPENAPI_DIRECTORY}/APIs/amazonaws.com/iam/2010-05-08"
+docker run --rm -v "${PWD}:/local/out/rust/" openapitools/openapi-generator-cli generate \
+    -i /local/out/rust/swagger.yaml \
+    -g rust \
+    -o /local/out/rust/generated \
+    --additional-properties packageName=aws_iam_client --library=reqwest
+popd
+```
+
+This combined with the cleanup of the `update.sh` generator script I did [two
+weeks ago]({% post_url 2019-11-08-butter-days-12 %}) means I can run the whole
+conversion and generation process with this one liner:
+
+```bash
+ ./update.sh v2.561.0 && ./generate.sh openapi-directory
+```
+
+It takes a minute to run end to end, but that will give me some [time to
+think](https://xkcd.com/303/).  As long as the active effort and thought from me
+is small each time I want to test then I'm happy.  One command to get feedback.
+That's a good situation.
+
+## Unrecognized Twitter Field
+
+From last time, I found that the author of the
+[aws2openapi](https://github.com/APIs-guru/aws2openapi) project had added their
+twitter account in `info.contact.x-twitter`, which caused the openapi-generator
+to fail.
+
+I [filed an issue for that](https://github.com/APIs-guru/aws2openapi/issues/27)
+and I'm just going to remove that field.
+
+## Unknown Base Type
+
+The next warning is this one:
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+```
+
+I don't really understand what's going on here, but from `codegenModel is null`
+I'm thinking that I should understand what `codegenModel` is.
+
+[Here's the first google
+result](https://github.com/OpenAPITools/openapi-generator/issues/2236) for
+"codegenmodel is null".  From looking at the full set of warnings they posted
+and where they match mine, it looks like another warning that I'm seeing is
+actually related to the first one:
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - The following schema has undefined (null) baseType. It could be due to form parameter defined in OpenAPI v2 spec with incorrect consumes. A correct 'consumes' for form parameters should be 'application/x-www-form-urlencoded' or 'multipart/?'
+[main] WARN  o.o.codegen.DefaultCodegen - schema: class Schema {
+    type: null
+    format: null
+    $ref: null
+    description: null
+    title: null
+    multipleOf: null
+    maximum: null
+    exclusiveMaximum: null
+    minimum: null
+    exclusiveMinimum: null
+    maxLength: null
+    minLength: null
+    pattern: null
+    maxItems: null
+    minItems: null
+    uniqueItems: null
+    maxProperties: null
+    minProperties: null
+    required: [CertificateBody]
+    not: null
+    properties: {UserName=class StringSchema {
+        class Schema {
+            type: string
+            format: null
+            $ref: null
+            description: <p>The name of the user the signing certificate is for.</p> <p>This parameter allows (through its <a href="http://wikipedia.org/wiki/regex">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p>
+            title: null
+            multipleOf: null
+            maximum: null
+            exclusiveMaximum: null
+            minimum: null
+            exclusiveMinimum: null
+            maxLength: 128
+            minLength: 1
+            pattern: [\w+=,.@-]+
+            maxItems: null
+            minItems: null
+            uniqueItems: null
+            maxProperties: null
+            minProperties: null
+            required: null
+            not: null
+            properties: null
+            additionalProperties: null
+            nullable: null
+            readOnly: null
+            writeOnly: null
+            example: null
+            externalDocs: null
+            deprecated: null
+            discriminator: null
+            xml: null
+        }
+    }, CertificateBody=class StringSchema {
+        class Schema {
+            type: string
+            format: null
+            $ref: null
+            description: <p>The contents of the signing certificate.</p> <p>The <a href="http://wikipedia.org/wiki/regex">regex pattern</a> used to validate this parameter is a string of characters consisting of the following:</p> <ul> <li> <p>Any printable ASCII character ranging from the space character (\u0020) through the end of the ASCII character range</p> </li> <li> <p>The printable characters in the Basic Latin and Latin-1 Supplement character set (through \u00FF)</p> </li> <li> <p>The special characters tab (\u0009), line feed (\u000A), and carriage return (\u000D)</p> </li> </ul>
+            title: null
+            multipleOf: null
+            maximum: null
+            exclusiveMaximum: null
+            minimum: null
+            exclusiveMinimum: null
+            maxLength: 16384
+            minLength: 1
+            pattern: [\u0009\u000A\u000D\u0020-\u00FF]+
+            maxItems: null
+            minItems: null
+            uniqueItems: null
+            maxProperties: null
+            minProperties: null
+            required: null
+            not: null
+            properties: null
+            additionalProperties: null
+            nullable: null
+            readOnly: null
+            writeOnly: null
+            example: null
+            externalDocs: null
+            deprecated: null
+            discriminator: null
+            xml: null
+        }
+    }}
+    additionalProperties: null
+    nullable: null
+    readOnly: null
+    writeOnly: null
+    example: null
+    externalDocs: null
+    deprecated: null
+    discriminator: null
+    xml: null
+}
+```
+
+This is starting to clear things up a little bit.  The warning even gives me a
+suggestion: `It could be due to form parameter defined in OpenAPI v2 spec with
+incorrect consumes. A correct 'consumes' for form parameters should be
+'application/x-www-form-urlencoded' or 'multipart/?'`.  Where is this "consumes"
+field?  Let's check the spec.
+
+Well, the only time I see "consumes" in the spec is here:
+
+```yaml
+consumes:
+  - text/xml
+```
+
+That looks like the issue.  From [this blog
+post](https://swagger.io/blog/news/whats-new-in-openapi-3-0/) about what's new
+in openapi 3.0, it looks like there were some changes related to how content
+types are specified.  Many of those bullet points say things that seem relevant,
+but one of them says "Operations can now consume both formdata and other media
+types such as JSON.".  This seems like the right path to follow.
+
+Sure enough, there's a
+[`requestBody`](https://swagger.io/docs/specification/describing-request-body/)
+keyword in openapi 3.0 that allows specifying content differently, and their
+example even has `application/xml` as a content type.
+
+Because running a test is so easy now, I'm going to try adding `application/xml`
+instead of `text/xml` just to see what happens.  Nope.  Still got the same
+error, so it wasn't that easy.
+
+## Hello XML My Old Friend
+
+A few weeks ago, I found [this post about generically parsing
+XML](https://groups.google.com/forum/#!topic/golang-nuts/zEmDOp_yFpU/discussion).
+Basically that post is arguing that parsing XML into a generic map isn't really
+possible like it is with something like JSON, at minimum because XML can have
+duplicate keys.  I wouldn't be suprised if it also has other things that make it
+harder to parse.  It's XML.
+
+Actually, now that I'm reading the full thread again, it looks like someone
+posted a link to a [project that can parse
+XML](https://github.com/clbanning/mxj).  I somehow missed that before.  Maybe
+it's more hopeful than I thought.
+
+The reason I'm looking into this is because I'm suspicious that the issue isn't
+that the swagger 2.0 spec doesn't support XML but rather that openapi-generator
+codegen doesn't support XML.  If it was just the spec maybe I could convert the
+spec to openapi 3.0, but if it's the code generator I'll have to add support for
+generating code that can parse XML.
+
+Let's try to find out.  First, I found what looks like the [directory with the
+rust code
+generators](https://github.com/OpenAPITools/openapi-generator/tree/master/modules/openapi-generator/src/main/resources/rust).
+The first, very cursory search doesn't look good:
+
+```
+ $ git grep json | wc -l
+23
+ $ git grep xml | wc -l
+0
+```
+
+23 lines involving json and no mention of XML.  I think this tells me that the
+generator itself needs to have support for XML and it does not.
+
+Yikes, this is not where I want to be.  I didn't sign up for writing XML parsing
+logic.  Let's see if I can get out of this work.
+
+Let's try the [java
+module](https://github.com/OpenAPITools/openapi-generator/tree/master/modules/openapi-generator/src/main/resources/Java).
+Java is ["enterprise
+grade"](https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition), so
+maybe that generator supports XML.
+
+```
+ $ git grep json | wc -l
+129
+ $ git grep xml | wc -l
+271
+```
+
+All right, that looks a little more promising.  Maybe I won't have to write this
+myself after all.  Getting XML support in the rust generator might be a nice
+thing to upstream at some point, but for now I just want to figure out what it
+takes to get all this working.
+
+Just to be crazy, let's try running the java generator and see what happens:
+
+```
+ $ docker run --rm openapitools/openapi-generator-cli list | grep java
+    - java
+    - javascript
+    - javascript-closure-angular
+    - javascript-flowtyped
+    - java-inflector
+    - java-msf4j
+    - java-pkmst
+    - java-play-framework
+    - java-undertow-server
+    - java-vertx
+```
+
+Now in my `generate.sh` script I'll just replace all instances of `rust` with
+`java`.
+
+```bash
+docker run --rm -v "${PWD}:/local/out/java/" openapitools/openapi-generator-cli generate \
+    -i /local/out/java/swagger.yaml \
+    -g java \
+    -o /local/out/java/generated \
+    --additional-properties packageName=aws_iam_client
+```
+
+Hmm, well I actually get the same errors back out.  That's good to know.
+
+```
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - The following schema has undefined (null) baseType. It could be due to form parameter defined in OpenAPI v2 spec with incorrect consumes. A correct 'consumes' for form parameters should be 'application/x-www-form-urlencoded' or 'multipart/?'
+```
+
+I have a feeling that I'm actually going to have to deal with both issues.  I
+suspect that the swagger 2.0 spec might not really support this content type and
+that the rust code generator doesn't support XML.  So that means to get this
+working I'll have to both convert the spec to openapi 3.0 and implement XML
+parsing in the generated rust code.
+
+Well, that's too bad, but at least I know exactly what I need to do now.
+
+## Next Time
+
+Before today I didn't have a good sense of how much would actually be needed to
+get this working, or if it was even possible.  Now that the issues are a little
+more narrowed down I think I can see the way to get where I want to go.
+
+Next time, I want to run the [swagger 2.0 to openapi 3.0
+converter](https://github.com/Mermade/oas-kit) on the swagger 2.0 specs I've
+been using, and try to run the openapi-generator on the resulting openapi 3.0
+spec to see what errors come out.
+
+For now I'll just generate the java client, knowing that if I want a rust client
+I'll need to add XML support.  Probably not an insane amount of work, but it is
+a distraction from what I'm actually trying to do.
+
+I'm also curious whether the openapi-directory already has any specs in the
+openapi 3.0 format, and if so where they put them.  Then when I generate and get
+the openapi 3.0 specs working I can possibly commit them back to the directory.
