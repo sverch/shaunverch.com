@@ -1,0 +1,210 @@
+---
+layout: post
+title:  "Butter Days: Day 15"
+date:   2019-11-29 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 15 of [Butter Days]({% post_url 2019-11-22-butter-days-14 %}), from
+Paper Co. Cafe in Houston, TX.
+
+I thought I'd have more time this week, but my train got very delayed.  So this
+will be another very short post.
+
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Last Time
+
+Last week I was focusing on the `UNKNOWN_BASE_TYPE` error returned by the
+[openapi generator](https://github.com/OpenAPITools/openapi-generator/).  It
+seemed to be XML related, and the error said something about a v2 spec with
+"incorrect consumes".
+
+I found that the rust code generator doesn't have any mention of XML, while the
+Java library did have mention of XML.  However, the java generator returned the
+same error as the rust generator.
+
+My theory is that both the v2 spec doesn't support XML and that the rust code
+generator also doesn't support it.  I'm hoping that by converting the spec to v3
+and using the java code generator I can get around both of these issues.
+
+## Generating V3 Specs
+
+Fortunately, there's a Swagger V2 to OpenAPI V3 [conversion
+tool](https://github.com/Mermade/oas-kit/blob/master/packages/swagger2openapi/README.md)
+called `swagger2openapi`.
+
+First, I followed the instructions in the
+[README](https://github.com/Mermade/oas-kit/blob/master/packages/swagger2openapi/README.md)
+to install it via `npm`:
+
+```
+sudo npm install -g swagger2openapi
+```
+
+I could probably have installed it locally and set up my `PATH` to point to the
+local installation, but I didn't want to bother with that.  Apparently I could
+use `npm bin` [to get that path
+though](https://2ality.com/2016/01/locally-installed-npm-executables.html) if I
+wanted to set it up.  Not too bad.
+
+Then I ran the converter:
+
+```shell
+swagger2openapi \
+    openapi-directory/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml \
+    >> aws-iam-openapi.json
+```
+
+Now let's try the generator!
+
+```
+$ docker run --rm -v "${PWD}:/local/out/java/" \
+    openapitools/openapi-generator-cli generate \
+    -i /local/out/java/aws-iam.json \
+    -g java \
+    -o /local/out/java/generated \
+    --additional-properties packageName=aws_iam_client \
+    | tee errors.txt
+...
+$ cat errors.txt | grep UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+[main] WARN  o.o.codegen.DefaultCodegen - codegenModel is null. Default to UNKNOWN_BASE_TYPE
+```
+
+Well, that's unfortunate.  No effect.  So the issue is somewhere else, not in
+the fact that this spec is v2.
+
+In poking around with the output, I did notice something that I probably should
+have checked before.  This error shows up only 6 times.  However, there are far
+more endpoints than that.  Here's a count of all the paths:
+
+```
+$ cat aws-iam-openapi.json | jq ".paths | keys[]" | wc -l
+140
+```
+
+By the way, if you haven't used `jq` before, it's great.  This query is getting
+the `paths` object and just printing all the keys.  So I have 140 paths and only
+6 errors.  This suggests that this is not a systemic issue, but instead an issue
+with specific parts of the spec.
+
+Looking at that output more, I can see this:
+
+```
+$ cat errors.txt | grep properties:
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {SAMLProviderArn=class StringSchema {
+                properties: null
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {SAMLProviderArn=class StringSchema {
+                properties: null
+```
+
+So there seem to be a few fields that are problematic here.  Let's see how much
+`SAMLProviderArn` shows up in the spec:
+
+```
+$ grep SAMLProviderArn \
+    openapi-directory/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml
+        - name: SAMLProviderArn
+        - name: SAMLProviderArn
+        - name: SAMLProviderArn
+        - name: SAMLProviderArn
+        - name: SAMLProviderArn
+        - name: SAMLProviderArn
+      SAMLProviderArn:
+      SAMLProviderArn:
+      - SAMLProviderArn
+      SAMLProviderArn:
+      - SAMLProviderArn
+      SAMLProviderArn:
+      - SAMLProviderArn
+      SAMLProviderArn:
+```
+
+More than I expected, but few enough times that I could probably just yank it
+out.  Let's try `PolicyArn`:
+
+```
+$ grep PolicyArn \
+    openapi-directory/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml \
+    | wc -l
+60
+```
+
+Not shocking, this is AWS IAM, or Identity and Access Management, so it's all
+about policies.  I won't just be able to delete every time that's referenced.
+
+Unfortunately `OpenIDConnectProviderArn` is similar:
+
+```
+$ grep OpenIDConnectProviderArn \
+    openapi-directory/APIs/amazonaws.com/iam/2010-05-08/swagger.yaml \
+    | wc -l
+```
+
+A good place to start might be to understand the `SAMLProviderArn` and where
+it's used.  Since converting to v3 didn't change anything I'm going to leave the
+spec at v2 to reduce the number of variables.
+
+## SAMLProviderArn
+
+First, I'm going to try deleting every section with SAML in it from the original
+v2 spec and see if that at least makes the SAML error go away.  After deleting
+those sections and rerunning the generator, I see this:
+
+```
+$ cat errors3.txt | grep properties: | wc -l
+478
+```
+
+Well, that's not what I expected.  What happens if I convert it to v3 and do it
+again with the SAML sections deleted?
+
+```
+$ cat errors4.txt | grep properties:
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+```
+
+Sure enough, converting to v3 does change the result, and I can see here that
+the SAML section errors are also gone.  So the conversion is actually fixing
+some errors, but there are a few that still fail for some reason.
+
+This also explains why I "didn't notice" before that there were only six
+instances of this error.  It turns out the error count was that low only after I
+converted to the v3 spec.
+
+## Next Time
+
+Like I said, this is a short one.  Unfortunately, I don't have time to go much
+further, and this looks like something that will take a good chunk of time to
+get to the bottom of.  Next week I'll hopefully actually be back on track.
+
+For next week, I have a good starting point though.  I've reduced the error
+count down to a few sections by converting to the v3 spec, and one of the
+sections references something that doesn't show up many times in the spec,
+specifically the SAML stuff.  This will give me something to focus on to try to
+find out what's wrong, and I can also compare to sections that aren't causing
+errors.
