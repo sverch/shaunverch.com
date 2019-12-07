@@ -1,0 +1,194 @@
+---
+layout: post
+title:  "Butter Days: Day 16"
+date:   2019-12-06 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 16 of [Butter Days]({% post_url 2019-11-29-butter-days-15 %}), from
+Art Of Coffee Cafe in Houston, TX.
+
+I have a little more time this week but still not copious time.  We'll see how
+far I can make it.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.
+
+<hr>
+<br>
+
+## Fixing The Spec
+
+What I'm trying to do now is get some actual code generated from the OpenAPI
+specs for AWS.  From last time, I learned that converting the spec from Swagger
+2.0 to OpenAPI 3.0 reduced the number of errors, but there were still a few
+remaining issues.
+
+So to start, I'm going to change my `generate.sh` script to first convert to
+OpenAPI 3.0 before trying to generate any code.  Here's a piece of what that
+looks like:
+
+```shell
+pushd "${OPENAPI_DIRECTORY}/APIs/amazonaws.com/iam/2010-05-08"
+swagger2openapi swagger.yaml >| openapi.json
+docker run --rm -v "${PWD}:/local/out/java/" openapitools/openapi-generator-cli generate \
+    -i /local/out/java/openapi.json \
+    -g java \
+    -o /local/out/java/generated \
+    --additional-properties packageName=aws_iam_client
+popd
+```
+
+Now I can run a single generate command:
+
+```
+$ ./generate.sh openapi-directory/ | tee output.log
+...
+$ cat output.log | grep properties:
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+```
+
+Great, so now I'm back to where I was before, and have one script to reproduce
+it.
+
+## Diffing The SAML Sections
+
+So let's get to it.  From last time, I saw that there were some errors involving
+the SAML sections, so I'm going to focus in on that.
+
+First, I confirmed that when I generate the spec from scratch I get the same
+errors:
+
+```
+$ ./generate.sh openapi-directory/ | tee output.log
+...
+$ cat output.log | grep properties:
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {SAMLProviderArn=class StringSchema {
+                properties: null
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {SAMLProviderArn=class StringSchema {
+                properties: null
+```
+
+Now, I'm going to delete everything under the `paths` key that has "SAML" in it.
+For example, this entry:
+
+```
+  '/#Action=DeleteSAMLProvider':
+    get:
+      x-aws-operation-name: DeleteSAMLProvider
+      operationId: GET DeleteSAMLProvider
+      description: '<p>Deletes a SAML provider resource in IAM.</p> <p>Deleting the provider resource from IAM does not update any roles that reference the SAML provider resource''s ARN as a principal in their trust policies. Any attempt to assume a role that references a non-existent provider resource ARN fails.</p> <note> <p> This operation requires <a href="https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html">Signature Version 4</a>.</p> </note>'
+      responses:
+      ...
+```
+
+Once I do that, I see the errors go away:
+
+```
+$ ./generate.sh openapi-directory/ | tee output.log
+...
+$ cat output.log | grep properties:
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+        properties: {OpenIDConnectProviderArn=class StringSchema {
+                properties: null
+        properties: {PolicyArn=class StringSchema {
+                properties: null
+```
+
+Ok, this is progress.  I think now I'm going to regenerate the specs, and then
+delete all but one path.  Then I can start deleting parts of it to really narrow
+down the issue.
+
+All right, now we're getting somewhere!  When I delete everything but
+`ListSAMLProviders`, the error goes away.  Now I can start deleting some of the
+endpoints to figure out exactly which ones cause the failure.
+
+After running this test a few times, I find that `DeleteSAMLProvider` is the
+offender.  Let's try finding where `SAMLProviderArn` (the original error) shows
+up in that.
+
+Sure enough, deleting that parameter just from the spec for `DeleteSAMLProvider`
+fixes the issue.  Now we know exactly where the issue is!  Let's see if I can
+find other places to compare it to.
+
+Specifically it's in the `post` version of that endpoint, and this is the block
+that I remove to fix it:
+
+```yaml
+- name: SAMLProviderArn
+  in: formData
+  required: true
+  description: '<p>The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.</p> <p>For more information about ARNs, go to <a href="https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> in the <i>AWS General Reference</i>. </p>'
+  type: string
+  minLength: 20
+  maxLength: 2048
+```
+
+Unfortunately, this field shows up in other endpoints that don't cause any
+errors, so there's some strange interaction going on here in this endpoint
+specifically that isn't just about how this field is structured.  The error even
+goes away when I rename this field, which tells me something.
+
+Now that I know it goes away when I rename those fields I'm going to try a bunch
+of things involving renaming, for example renaming every `SAMLProviderArn`
+instance to `SAMLProviderArnTest` to see if I get an error.  I do.  Now I can
+try different subsets to see which combination of fields is necessary to cause
+the error.
+
+It turns out if `DeleteSAMLProvider` and `GetSAMLProvider` have parameters with
+the same name, it fails, but if one of them has a different name, it passes.
+
+Now I'm starting to remember the error code itself, `UNKNOWN_BASE_TYPE`.  "Base
+Type" is the operative phrase.  I thought that was something involving a missing
+type for something, but maybe it's actually trying to say that there's some
+parent type that these types should be inheriting from, but something about this
+spec is screwing that up.
+
+Now that I know what I'm looking for, it was a little easier to find [this
+issue](https://github.com/OpenAPITools/openapi-generator/issues/2955).  It looks
+like an example where the ruby generator was doing the same thing, or at least
+something similar.  The generator is trying to generate a class from something
+it shouldn't.
+
+Combining the "base type" idea with that issue, I wonder what would happen if I
+changed other fields on those paths.  Nothing changes.  So there's some class
+based generation happening, but only on that field.  I still don't understand
+why this is happening so I can't fix it in the other fields that had this issue
+(or really, this one).
+
+This did go away when I changed from `formData`, despite the fact that there was
+another identical parameter with a type of `formData`.
+
+## Next Time
+
+All right, so I'm much closer now, but still not quite there.  I at least have
+narrowed it down to which fields are failing, even though I still don't quite
+understand why.
+
+My theory is that the [ruby
+issue](https://github.com/OpenAPITools/openapi-generator/issues/2955) I found is
+related somehow.  I think that the generator is trying to turn something into a
+model or object, when it should just be a generic object, and that's causing a
+conflict.
+
+To figure this out, I'm going to have to keep hunting, and changing various
+things until I understand exactly what is breaking the spec.  I'll get to it
+eventually, even if I have to delete everything until I get to a minimum failing
+test case with just these two paths.
