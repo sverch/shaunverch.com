@@ -1,0 +1,129 @@
+---
+layout: post
+title:  "Butter Days: Day 17"
+date:   2019-12-13 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 17 of [Butter Days]({% post_url 2019-11-29-butter-days-15 %}), from
+Teaism Penn Quarter in Washington, DC.
+
+I've had a few weeks where I haven't made much progress, and unfortunately this
+week is going to be the same.  With Kubecon, the holidays, and the end of this
+[Amtrak trip](https://shaunverch.com/amtrak) (which included a mid-week 28 hour
+overnight train), things have gotten a little crazy.
+
+Instead of doing a normal post, since this is the last stop on this Amtrak trip,
+I'm just going to write a summary of Butter Days so far, looking back on what
+I've managed to do since I started.
+
+See [Day 1 of Butter Days]({% post_url 2019-08-23-butter-days-1 %}) for context
+on what I'm ultimately trying to build.  That's still true!
+
+<hr>
+<br>
+
+## Butter Days, the Amtrak Times
+
+I've had 17 weeks of Butter, starting in August in Cambridge, MA, and ending in
+December in Washington, D.C.
+
+While my productivity has dropped a bit in the past few weeks, it's nice to look
+back and see what I've managed to do overall since I started.
+
+- [**Day 1 (08-23)**]({% post_url 2019-08-23-butter-days-1 %}) - Set out to
+  build a tool that can dump [AWS IAM](https://aws.amazon.com/iam/)
+  configuration and alert on misconfigurations using something like [open policy
+  agent](https://www.openpolicyagent.org/).
+
+- [**Day 2 (08-30)**]({% post_url 2019-08-30-butter-days-2 %}) - Learned how to
+  build a basic Rust REST client.
+
+- [**Day 3 (09-06)**]({% post_url 2019-09-06-butter-days-3 %}) - Generated the
+  Golang client library and server stubs for the [petstore
+  example](http://petstore.swagger.io/) using the [OpenAPI
+  Generator](https://github.com/OpenAPITools/openapi-generator/).  Hit issues
+  generating the Rust client, because one of the Rust generators was out of date
+  and broken.
+
+- [**Day 4 (09-13)**]({% post_url 2019-09-13-butter-days-4 %}) - Used the up to
+  date Rust code generator to generate the Rust client for the OpenAPI petstore
+  example.
+
+- [**Day 5 (09-20)**]({% post_url 2019-09-20-butter-days-5 %}) - Contributed
+  some tests to the [awscurl](https://github.com/okigan/awscurl) project in an
+  effort to understand AWS's proprietary signing process.
+
+- [**Day 6 (09-27)**]({% post_url 2019-09-27-butter-days-6 %}) - Looked for a
+  place to inject the signature headers in the generated Rust client library.
+  Found that authentication is part of the OpenAPI spec, which means AWS's
+  proprietary signing process makes it inherently incompatible with the OpenAPI
+  ecosystem.
+
+- [**Day 7 (10-04)**]({% post_url 2019-10-04-butter-days-7 %}) - Created the
+  inital skeleton of a proxy that can accept unsigned AWS requests, add the
+  proper signature headers, and forward the request to AWS.
+
+- [**Day 8 (10-11)**]({% post_url 2019-10-11-butter-days-8 %}) - Finished the
+  first version of the AWS signing proxy, and successfully got data from a real
+  AWS account using a normal `curl` command over http.
+
+- [**Day 9 (10-18)**]({% post_url 2019-10-18-butter-days-9 %}) - Added https
+  support to the AWS signing proxy.  The certificates returned were self signed
+  on demand, so this required passing `--insecure` to `curl` to ignore
+  certificate errors.
+
+- [**Day 10 (10-25)**]({% post_url 2019-10-25-butter-days-10 %}) -
+  Investigated some options for allowing clients to trust the certificates
+  returned by the proxy.
+
+- [**Day 10.5 (10-26)**]({% post_url 2019-10-26-butter-days-10.5 %}) - Used the
+  [mkcert](https://github.com/FiloSottile/mkcert) library to generate a self
+  signed CA and certificate for the AWS API endpoints, added support in the
+  proxy to return that certificate, and added instructions to trust it system
+  wide so clients no longer had to ignore certificate errors.
+
+- [**Day 10.75 (10-27)**]({% post_url 2019-10-27-butter-days-10.75 %}) -
+  Attempted to generate the golang client library using the AWS OpenAPI specs,
+  but the generator didn't interact well with the fact that the AWS API returns
+  XML.
+
+- [**Day 11 (11-01)**]({% post_url 2019-11-01-butter-days-11 %}) - Attempted to
+  generate the Rust client using the AWS OpenAPI specs and got back a large
+  number of errors.
+
+- [**Day 12 (11-08)**]({% post_url 2019-11-08-butter-days-12 %}) - Ran the tool
+  that was originally used to generate the AWS OpenAPI specs, and verified that,
+  given the right inputs, the output was the same as what was committed into the
+  [OpenAPI spec
+  directory](https://github.com/APIs-guru/openapi-directory/tree/master/APIs/amazonaws.com/iam/2010-05-08).
+
+- [**Day 13 (11-15)**]({% post_url 2019-11-15-butter-days-13 %}) - Fixed a minor
+  error in the Rust code generation, and verified that the same error from
+  before still existed.
+
+- [**Day 14 (11-22)**]({% post_url 2019-11-22-butter-days-14 %}) - Created a
+  script to run the OpenAPI spec generation and the code generation all at once,
+  to quickly test whether any changes to the way the spec was generated affected
+  the errors returned by the code generator.
+
+- [**Day 15 (11-29)**]({% post_url 2019-11-29-butter-days-15 %}) - Converted the
+  spec from v2 to v3 using a conversion tool and saw the error count drop
+  dramatically.
+
+- [**Day 16 (12-06)**]({% post_url 2019-12-06-butter-days-16 %}) - Found the
+  part of the spec that needed to be changed to stop the generator from
+  reporting errors.
+
+## Butter Days, It's Just Like Butter
+
+It's nice to list all that out and see that I've actually made some significant
+progress over the past few months.  Obviously I still have a long way to go,
+even for this scoped project, but this at least gives me a sense of what's
+possible (and how long things take).
+
+I think this project is still worth doing, so I'm going to keep going.  At this
+point, it all comes down to generating a functional Rust client using the real
+AWS OpenAPI specs, and actually using that client to get data back from the AWS
+API.
+
+So let's keep going!
