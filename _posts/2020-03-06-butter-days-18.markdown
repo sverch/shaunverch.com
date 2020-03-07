@@ -1,0 +1,411 @@
+---
+layout: post
+title:  "Butter Days: Day 18"
+date:   2020-03-06 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 18 of [Butter Days]({% post_url 2019-12-13-butter-days-17 %}), from
+Black Cat LES in New York, NY.
+
+This is the first Butter Days of 2020!  I had a big gap there with the holidays,
+personal things, and of course the general 2020 craziness, but now I want to get
+back into it.
+
+See my [last post]({% post_url 2019-12-13-butter-days-17 %}) for the progress so
+far.
+
+I was been feeling a bit discouraged about this OpenAPI approach recently, but I
+had a pleasant surprise when I tried to rerun my scripts that turned out to make
+things significantly easier.
+
+<hr>
+<br>
+
+## Open Source People Are Great
+
+Way back in November, I [filed an
+issue](https://github.com/APIs-guru/aws2openapi/issues/27) on the project that
+generated the AWS OpenAPI specs.  The issue itself was pretty minor, just a
+failure to parse the `x-twitter` field.
+
+It turned out that the issue was actually with the OpenAPI generator, because
+that field is actually valid.  The bug was probably fixed since the last time I
+ran into it, because I couldn't reproduce it anymore.
+
+The best part though, is that the author [has now updated all the AWS specs to
+openapi
+3.0](https://github.com/APIs-guru/openapi-directory/commit/830426e34b85c7a47246a96e5827300973ae80da)
+I'm not sure if it's because he knew I was using them from that issue or if he
+was going to do it anyway, but I very much appreciate it in any case.  He's
+actually one of the primary maintainers of the [OpenAPI
+Directory](https://github.com/APIs-guru/openapi-directory) that I've been using
+this whole time.
+
+Many of the issues that I was running into just disappeared when using the new
+OpenAPI 3.0 spec that he generated, so I may actually be able to make some
+progress!
+
+## Generating A Rust Client
+
+Now that this spec has been updated, I'm going to use them to do [exactly what I
+did with the example OpenAPI specs]({% post_url 2019-09-13-butter-days-4 %}),
+just to see how far I can get before hitting an error.
+
+First, I'll create a new rust project:
+
+```
+$ cargo new reqwest-openapi-client
+     Created binary (application) `reqwest-openapi-client` package
+$ tree reqwest-openapi-client/
+reqwest-openapi-client/
+├── Cargo.toml
+└── src
+    └── main.rs
+
+1 directory, 2 files
+```
+
+Now, I'm going to use this script to run the generator:
+
+```shell
+#!/bin/bash
+
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+
+NUM_ARGS_REQUIRED=2
+if [ $# -ne "${NUM_ARGS_REQUIRED}" ]; then
+    cat <<EOF
+Usage: $0 <openapi-spec> <output-directory>
+
+    Try to generate openapi client from openapi spec.
+
+EOF
+    exit 1
+fi
+
+run () {
+    echo "+" "$@" 1>&2
+    "$@"
+}
+
+INPUT_DIRECTORY=$(readlink -f "$(dirname "$1")")
+INPUT_FILE="$(basename "$1")"
+OUTPUT_DIRECTORY=$(readlink -f "$2")
+
+echo "Resetting output directory"
+run rm -rf "${OUTPUT_DIRECTORY}"
+run mkdir -p "${OUTPUT_DIRECTORY}"
+
+echo "Generating rust client from openapi specs"
+# Need the `-u` option because of https://github.com/moby/moby/issues/3206
+run docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "${INPUT_DIRECTORY}:/input/" \
+    -v "${OUTPUT_DIRECTORY}:/output/" \
+    openapitools/openapi-generator-cli generate \
+    -i "/input/${INPUT_FILE}" \
+    -g rust \
+    --library reqwest \
+    -o "/output" \
+    --additional-properties packageName=aws_iam_client
+```
+
+There are enough little annoying things, like setting the correct permissions on
+the output directory (by default [everything gets created as
+root](https://github.com/moby/moby/issues/3206)), that a script made sense.
+
+Now let's run that script to generate the client library:
+
+```
+$ ./run-openapi-generator.sh openapi-directory/APIs/amazonaws.com/iam/2010-05-08/openapi.yaml reqwest-openapi-client/generated
+Resetting output directory
++ rm -rf /home/sverch/projects/aws2openapi/reqwest-openapi-client/generated
++ mkdir -p /home/sverch/projects/aws2openapi/reqwest-openapi-client/generated
+Generating rust client from openapi specs
++ docker run --rm -u 1000:1000 -v /home/sverch/projects/aws2openapi/openapi-directory/APIs/amazonaws.com/iam/2010-05-08:/input/ -v /home/sverch/projects/aws2openapi/reqwest-openapi-client/generated:/output/ openapitools/openapi-generator-cli generate -i /input/openapi.yaml -g rust --library reqwest -o /output --additional-properties packageName=aws_iam_client
+
+...
+
+[main] INFO  o.o.codegen.AbstractGenerator - writing file /output/src/apis/configuration.rs
+[main] INFO  o.o.codegen.AbstractGenerator - writing file /output/src/apis/client.rs
+[main] INFO  o.o.codegen.AbstractGenerator - writing file /output/src/apis/mod.rs
+[main] INFO  o.o.codegen.AbstractGenerator - writing file /output/.openapi-generator-ignore
+[main] INFO  o.o.codegen.AbstractGenerator - writing file /output/.openapi-generator/VERSION
+```
+
+The generator ran without errors!  Now I'll try to include it in my
+`Cargo.toml`:
+
+```toml
+[package]
+name = "reqwest-openapi-client"
+version = "0.1.0"
+authors = ["Shaun Verch <shaun@shaunverch.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aws_iam_client = { path = "./generated" }
+```
+
+Even though I'm not using it anywhere, the fact that I've included it as a
+dependency means I can try to compile it:
+
+```
+$ cargo run
+
+...
+
+error[E0599]: no method named `to_string` found for type `&models::tag::Tag` in the current scope
+    --> generated/src/apis/default_api.rs:1115:81
+     |
+1115 |             req_builder = req_builder.query(&[("Tags", &s.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
+     |                                                                                 ^^^^^^^^^
+     |
+     = note: the method `to_string` exists but the following trait bounds were not satisfied:
+             `&models::tag::Tag : std::string::ToString`
+             `models::tag::Tag : std::string::ToString`
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+             candidate #1: `std::string::ToString`
+
+...
+
+
+error: aborting due to 7 previous errors
+
+For more information about this error, try `rustc --explain E0599`.
+error: Could not compile `aws_iam_client`.
+
+To learn more, run the command again with --verbose.
+```
+
+Now we know where we stand!  This is much further along than the last time I
+tried this, and I didn't even do anything.  It's really thanks to the awesome
+people maintaining these specs.
+
+## Getting Past The Compilation Errors
+
+I see three unique errors:
+
+```
+error[E0599]: no method named `to_string` found for type `&models::tag::Tag` in the current scope
+error[E0599]: no method named `to_string` found for type `&models::entity_type::EntityType` in the current scope
+error[E0599]: no method named `to_string` found for type `&models::context_entry::ContextEntry` in the current scope
+```
+
+First I'll use [`rustup`](https://www.rust-lang.org/tools/install) to update my
+rust toolchain:
+
+```
+$ rustup update
+...
+
+  stable-x86_64-unknown-linux-gnu updated - rustc 1.41.1 (f3e1a954d 2020-02-24)
+
+```
+
+I still got the same result, but it's nice to at least rule that out.
+
+For now, I'm just going to comment out the lines that are causing the error.
+It's not great, but my goal right now is to prove that this can work.  It also
+looks like hundreds of functions were generated, but there are fewer than ten
+errors, so I think the library will still be usable even if a few things are
+missing.  Good enough for a proof of concept.
+
+With those lines commented out, everything compiles successfully.
+
+## Actually Running It
+
+As a first test, I'm going to try to list all users in my account.  I'm mostly
+copying what I did before with the example OpenAPI specs.  Here's what that
+looks like:
+
+```rust
+use aws_iam_client;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let configuration = aws_iam_client::apis::configuration::Configuration::new();
+    let apiclient = aws_iam_client::apis::client::APIClient::new(configuration);
+    let result = apiclient.default_api().g_et_list_users(
+        "ListUsers", // action: &str,
+        "2010-05-08", // version: &str,
+        None, // x_amz_content_sha256: Option<&str>,
+        None, // x_amz_date: Option<&str>,
+        None, // x_amz_algorithm: Option<&str>,
+        None, // x_amz_credential: Option<&str>,
+        None, // x_amz_security_token: Option<&str>,
+        None, // x_amz_signature: Option<&str>,
+        None, // x_amz_signed_headers: Option<&str>,
+        None, // path_prefix: Option<&str>,
+        None, // marker: Option<&str>,
+        None); // max_items: Option<i32>)
+    println!("result = {:?}", result);
+    Ok(())
+}
+```
+
+Now, let's try the first run:
+
+```
+$ cargo run
+
+...
+
+   Compiling reqwest-openapi-client v0.1.0 (/home/sverch/projects/aws2openapi/reqwest-openapi-client)
+    Finished dev [unoptimized + debuginfo] target(s) in 4.04s
+     Running `target/debug/reqwest-openapi-client`
+result = Err(Reqwest(Error(Status(403), "https://iam.amazonaws.com/?Action=ListUsers&Version=2010-05-08#Action=ListUsers")))
+```
+
+An access denied error is exactly what I would expect at this point.  A while
+back I found that the [proprietary AWS signing process was incompatible with
+OpenAPI]({% post_url 2019-09-27-butter-days-6 %}), so I [wrote a
+proxy](https://github.com/sverch/aws-signature-proxy) that signs AWS requests
+going through it to hide that from clients.
+
+Now let's put everything together!
+
+## The First API Call
+
+First, I'll set up the man in the middle signing proxy.  I'm following the steps
+in the README for [this project](https://github.com/sverch/aws-signature-proxy)
+so I won't repeat them here.
+
+After setting up the proxy, I can directly curl the AWS API as a sanity check
+that my requests are being properly authenticated:
+
+```
+ $ https_proxy=localhost:8080 curl "https://iam.amazonaws.com/?Action=ListUsers&Version=2010-05-08#Action=ListUsers"
+<ListUsersResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+  <ListUsersResult>
+    <IsTruncated>false</IsTruncated>
+    <Users>
+      <member>
+        <Path>/</Path>
+        <PasswordLastUsed>2020-02-21T20:28:58Z</PasswordLastUsed>
+        <UserName>shaun.verch</UserName>
+        <Arn>arn:aws:iam::999999999999:user/shaun.verch</Arn>
+        <UserId>AAAAAAAAAAAAAAAAAAAAA</UserId>
+        <CreateDate>2017-09-26T21:42:46Z</CreateDate>
+      </member>
+    </Users>
+  </ListUsersResult>
+  <ResponseMetadata>
+    <RequestId>04f47eed-3187-410d-a46e-698328d41408</RequestId>
+  </ResponseMetadata>
+</ListUsersResponse>
+```
+
+Now, to get the client library to use my proxy, I can change the configuration
+from the default like this:
+
+```rust
+let client = reqwest::Client::builder()
+    .proxy(reqwest::Proxy::https("http://localhost:8080").unwrap())
+    .build()
+    .unwrap();
+let configuration = aws_iam_client::apis::configuration::Configuration {
+    base_path: "https://iam.amazonaws.com".to_owned(),
+    user_agent: Some("OpenAPI-Generator/2010-05-08/rust".to_owned()),
+    client: client,
+    basic_auth: None,
+    oauth_access_token: None,
+    bearer_access_token: None,
+    api_key: None,
+};
+let apiclient = aws_iam_client::apis::client::APIClient::new(configuration);
+```
+
+After all that, I get this very anticlimactic result:
+
+```
+result = Err(Reqwest(Error(Json(Error("expected value", line: 1, column: 1)))))
+```
+
+That's because this API is returning XML and not JSON, and I bet the rust
+generator currently only supports JSON.  Fortunately, rust has an [XML
+equivalent to its main JSON parsing
+library](https://github.com/RReverser/serde-xml-rs), that works in a very
+similar way.
+
+After playing around with that a bit, replacing the calls to the JSON parser
+with the XML parser, and changing the structs to match what actually gets
+returned, I finally have a result:
+
+```
+ $ cargo run
+   Compiling aws_iam_client v1.0.0 (/home/sverch/projects/aws2openapi/reqwest-openapi-client/generated)
+   Compiling reqwest-openapi-client v0.1.0 (/home/sverch/projects/aws2openapi/reqwest-openapi-client)
+    Finished dev [unoptimized + debuginfo] target(s) in 16.82s
+     Running `target/debug/reqwest-openapi-client`
+result = Ok(
+    ListUsersResultXML {
+        users: [
+            ListUsersResponse {
+                users: [
+                    Member {
+                        users: [
+                            User {
+                                path: "/",
+                                user_name: "shaun.verch",
+                                user_id: "AAAAAAAAAAAAAAAAAAAAA",
+                                arn: "arn:aws:iam::999999999999:user/shaun.verch",
+                                create_date: "2017-09-26T21:42:46Z",
+                                password_last_used: Some(
+                                    "2020-02-21T20:28:58Z",
+                                ),
+                                permissions_boundary: None,
+                                tags: None,
+                            },
+                        ],
+                    },
+                ],
+                is_truncated: Some(
+                    false,
+                ),
+                marker: None,
+            },
+        ],
+    },
+)
+```
+
+That's a rust struct containing a response directly from the AWS API!
+
+## Now What
+
+It turns out I just had to stop working on this project for a few months and
+most of my problems would be solved.
+
+I think this is proof that this is actually possible.  There are still some
+issues to work through, but they are mostly minor implementation issues rather
+than fundamental design issues.
+
+The main ones I see now are:
+
+- Actually getting the XML parsing logic into the generator.
+- Making sure the AWS specs actually match what the API returns (filed an issue
+  on the project that generats the OpenAPI spec
+  [here](https://github.com/APIs-guru/aws2openapi/issues/28)).
+- Fix the `to_string` errors in the generated rust code.
+
+Once I fix those, we'll have a client library for the AWS API that is fully
+auto-generated from a standard spec!
+
+That might not seem like a big deal, but it means I can start to write generic
+OpenAPI based code and it will all "just work" with AWS.  Things like:
+
+- [Command line
+  interfaces](https://github.com/OpenAPITools/openapi-generator-cli)
+- [Fuzz testing](https://github.com/Teebytes/TnT-Fuzzer)
+- Exporters (my use case of exporting IAM configuration)
+
+These are just a few examples.  Check out
+[openapi.tools](https://openapi.tools/) for an idea of what I'm talking about.
+
+So next time I'm going to fix those issues and then think about what comes next.
+Maybe I'll play around with some of the existing OpenAPI tools before continuing
+on with the IAM exporter.
