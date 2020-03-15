@@ -1,0 +1,165 @@
+---
+layout: post
+title:  "Butter Days: Day 19"
+date:   2020-03-14 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 19 of [Butter Days]({% post_url 2020-03-06-butter-days-18 %}), from
+my apartment in New York, NY.
+
+COVID-19 is happening right now, which is the main reason I'm not working from a
+cafe as usual.  The Federation of American Scientists made [this
+site](https://covid19.fas.org/l/en) which has a lot of great information about
+the virus.
+
+As far as this project goes, last week I had an unexpected breakthrough, but
+there are still some implementation issues to work through before I can fully
+generate this client without any manual fixes.
+
+<hr>
+<br>
+
+## AWS Service Definitions
+
+This spec has never actually been used to generate a real client for the AWS API
+before, so it was put together with the best guesses based on the documentation
+and the fields in the [AWS service
+definition](https://github.com/aws/aws-sdk-js/blob/98b098b45c5c0a3b0681b91d8f10480b2717609b/apis/iam-2010-05-08.normal.json).
+They did a great job, considering that.
+
+
+This service definition was mysteriously updated by a user called "awstools"
+that I can't click on to learn more (no github account), with commits that look
+like:
+
+```
+commit 3cb57c7462874bf62fb44275752ba91a244ca7be
+Author: awstools <awstools@amazon.com>
+Date:   Fri Nov 8 19:26:46 2019 +0000
+
+    Updates SDK to v2.568.0
+```
+
+I don't see pull requests either, so I wonder if Amazon has a special user that
+has write permission to master on all the SDKs.  It actually looks like these
+specs get updated quite frequently:
+
+```
+Fri Mar 13 18:05:25 2020 +0000  Updates SDK documentation
+Thu Mar 12 19:53:38 2020 +0000  Updates SDK to v2.639.0
+Wed Mar 11 18:27:13 2020 +0000  Updates SDK to v2.638.0
+Tue Mar 10 18:22:18 2020 +0000  Updates SDK to v2.637.0
+Mon Mar 9 18:19:44 2020 +0000   Updates SDK to v2.636.0
+Fri Mar 6 19:21:26 2020 +0000   Updates SDK to v2.635.0
+Thu Mar 5 19:29:41 2020 +0000   Updates SDK to v2.634.0
+Wed Mar 4 19:20:21 2020 +0000   Updates SDK to v2.633.0
+Tue Mar 3 19:21:17 2020 +0000   Updates SDK to v2.632.0
+Mon Mar 2 19:30:59 2020 +0000   Updates SDK to v2.631.0
+Sat Feb 29 00:48:37 2020 +0000  Updates SDK to v2.630.0
+```
+
+That's good to know.  When this is working it'll probably be worth setting up
+some kind of hook to automatically regenerate the OpenAPI specs when these
+update.
+
+## OpenAPI Spec Errors
+
+Because the OpenAPI specs aren't maintained by Amazon and haven't actually been
+used before, there are still some errors (unsurprisingly).
+
+I filed [this issue](https://github.com/APIs-guru/aws2openapi/issues/28) because
+there was a "members" field in the AWS spec that the author of the converter
+reasonably assumed was equivalent to the "properties" field in OpenAPI, but it
+actually meant that every object should be literally surrounded by a "member"
+sub-object (but apparently [this is not true for all
+endpoints](https://github.com/APIs-guru/aws2openapi/issues/28#issuecomment-597238341)).
+
+I also filed [this issue](https://github.com/APIs-guru/aws2openapi/issues/30)
+because the spec was generating both GET and POST requests for all the
+endpoints, but the original AWS service definition only specified POST.  Well,
+apparently [both work](https://github.com/APIs-guru/aws2openapi/pull/17), so
+I'll have to actually figure out the bugs I had when trying to get the GET
+request functions to compile in the generated Rust code.
+
+Once these errors are resolved, I'll probably set up some [regression
+tests](https://github.com/APIs-guru/aws2openapi/issues/29) so that these specs
+will stay correct (and functional).  This will work well in combination with
+automatically regenerating the specs when AWS makes an update.
+
+## Generating a Client That Supports XML
+
+I don't think the Rust client generator currently supports XML, and trying to
+support XML and correct the spec at the same time seems like something I want to
+avoid if I can, just so I can isolate whether my bugs are in the generator or in
+the spec itself.
+
+I'm looking through the [OpenAPI
+Generator](https://github.com/OpenAPITools/openapi-generator) project to try to
+understand which generators support generating XML-based clients.  In looking at
+the rust generator
+[here](https://github.com/OpenAPITools/openapi-generator/blob/master/modules/openapi-generator/src/main/java/org/openapitools/codegen/languages/RustClientCodegen.java#L77),
+I stumbled upon a field called `XMLStructureDefinitions`.  This seems promising.
+In the source I see [this
+comment](https://github.com/OpenAPITools/openapi-generator/blob/ea55968737fa80a3e306d1b08032ff4d911774c9/modules/openapi-generator-core/src/main/java/org/openapitools/codegen/meta/features/GlobalFeature.java#L108)
+that says "this option indicates whether XML structures can be defined by spec
+document and honored by the caller".  Well that sounds like exactly what I want.
+
+Through some more searching, I found [this directory with docs on all the
+generators](https://github.com/OpenAPITools/openapi-generator/tree/aa7cd4f5af8bd5147ac5dbc7b473d356dfdf572a/docs/generators)
+including whether they support that feature.  Let's find out which generators
+actually support XML:
+
+```
+$ git grep "|XMLStructureDefinitions|✓|"
+docs/generators/dynamic-html.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+docs/generators/html.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+docs/generators/html2.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+docs/generators/openapi-yaml.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+docs/generators/openapi.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+docs/generators/spring.md:|XMLStructureDefinitions|✓|OAS2,OAS3
+```
+
+Yikes.  Those aren't very many options.  Most things in that list are
+[documentation
+generators](https://github.com/OpenAPITools/openapi-generator/tree/aa7cd4f5af8bd5147ac5dbc7b473d356dfdf572a/docs/generators#documentation-generators)
+and "spring" is a [server
+generator](https://github.com/OpenAPITools/openapi-generator/tree/aa7cd4f5af8bd5147ac5dbc7b473d356dfdf572a/docs/generators#server-generators).
+That doesn't help me.  It's pretty shocking that not a single client supports
+this feature.  Sure enough, when I search for "XML" in the issues, most of the
+results are for the spring server.
+
+I think it's time to file an issue.  I might be the first one to implement XML
+support in a client, and Rust might be the first client to have XML support.
+
+It's not going to be as easy as just switching the parser from a JSON parser to
+an XML parser, despite the existense of [this great
+library](https://github.com/RReverser/serde-xml-rs) which so far has worked as a
+drop in replacement for the [JSON parser](https://github.com/serde-rs/json)
+that's used in the generated code.  The OpenAPI spec also has some [XML only
+features](https://swagger.io/docs/specification/data-models/representing-xml/)
+that were actually used to fix [my "members" sub-object
+issue](https://github.com/APIs-guru/aws2openapi/issues/28), so I'll have to
+implement those as well.
+
+I'm going to file an issue first, just to have some kind of sanity check and
+make sure my understanding is correct.
+
+All right [issue
+filed](https://github.com/OpenAPITools/openapi-generator/issues/5594).  I'm
+going to leave that there for now to see if anyone has corrections for me.  It
+is very strange that no client supports XML, so I'm hoping that I'm just
+misunderstanding something, but we'll see.
+
+## Next Time
+
+Next time will definitely be based on the response to that issue.  I'll either
+end up trying to make the rust generator support XML or end up using whatever
+they recommend instead.
+
+Either way, my current goal is still to get this spec working.  I would like to
+start moving on to some more interesting things, like actually exporting some
+things and thinking about what the offline data model would be for AWS state
+(which I suspect I can do by dumping everything in the
+["schemas"](https://github.com/APIs-guru/openapi-directory/blob/master/APIs/amazonaws.com/apigateway/2015-07-09/openapi.yaml#L7758)
+section of the spec), but I think that will be much more interesting when I'm
+actually working with real data that I've exported from my account.
