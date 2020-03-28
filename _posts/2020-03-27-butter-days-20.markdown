@@ -1,0 +1,263 @@
+---
+layout: post
+title:  "Butter Days: Day 20"
+date:   2020-03-27 01:00:00 -0500
+categories: butter open-source
+---
+This is Day 20 of [Butter Days]({% post_url 2020-03-14-butter-days-19 %}), from
+my apartment in New York, NY.
+
+Last time I filed an issue against the
+[openapi-generator](https://github.com/OpenAPITools/openapi-generator/issues/5594)
+for the rust codegen not generating XML bindings, [this
+issue](https://github.com/APIs-guru/aws2openapi/issues/28) because of the schema
+not quite matching what AWS returned, [this
+issue](https://github.com/APIs-guru/aws2openapi/issues/30) about GET requests
+being generated, and finally [this
+issue](https://github.com/APIs-guru/aws2openapi/issues/31) about the wrong
+content type.  I got some responses, so let's see where this goes.
+
+<hr>
+<br>
+
+## The Responses
+
+I'll just go through each issue with what happened:
+
+- [In the openapi-generator
+  issue](https://github.com/OpenAPITools/openapi-generator/issues/5594), the
+  person who replied said that `rust-server` supports XML.  It also turns out I
+  was completely looking in the wrong place for XML support and many clients
+  support XML.  It makes way more sense that I was making a mistake than that so
+  few clients supported it.  Since he mentioned `rust-server`, I'm going to try
+  out that one, under the theory that it's more actively maintained.
+- [The schema format issue](https://github.com/APIs-guru/aws2openapi/issues/28)
+  got fixed.  It was just a bug in how the spec was generated.
+- [In the issue about extra GET requests being
+  generated](https://github.com/APIs-guru/aws2openapi/issues/30), apparently the
+  AWS API supposedly supports GET and POST for every endpoint.  That seems
+  strange, but it shows that their spec is at least not wrong.
+- [Finally, in the wrong content type
+  issue](https://github.com/APIs-guru/aws2openapi/issues/31), I was actually
+  just wrong, and they are already correctly matching what the AWS API returned.
+  It turns out the
+  [generator](https://github.com/OpenAPITools/openapi-generator/issues/5594) was
+  the thing that needed to be fixed.
+
+So half of these issues were my lack of understanding and half of them were
+actual issues.  In any case, they're all fixed now, and I have a new lead.
+Since the responder to that ticket mentioned the `rust-server` generator, I'm
+going to assume that's the more actively maintained generator.
+
+## Using The New Generator
+
+I'm going to start from the beginning, and instead of using docker, try using
+the runner script in the `openapi-generator` repo:
+
+```
+$ git clone git@github.com:OpenAPITools/openapi-generator.git
+$ cd openapi-generator
+$ bin/utils/openapi-generator-cli.sh generate \
+    --generator-name rust-server \
+    --input-spec \
+    ../openapi-directory/APIs/amazonaws.com/iam/2010-05-08/openapi.yaml \
+    --output ../rust-server/generated
+```
+
+After installing some java tools, this worked fine, and I didn't have to deal
+with the issue where docker sets the wrong file permissions.  Much easier!
+
+Now let's try to build it:
+
+```
+$ cd ../rust-server/generated
+$ cargo build
+error: failed to parse manifest at `/home/sverch/projects/rust-server/generated/Cargo.toml`
+
+Caused by:
+  Expected dot for key `package.version`
+```
+
+Looks like that was just because the version got set to `version =
+"2010-05-08.0.0"`, which is probably [not a valid
+semver](https://github.com/rust-lang/rust/issues/24788#issuecomment-96091010).
+Changing that to something that actually is a [semver](https://semver.org/),
+like `1.0.0`, fixes that issue:
+
+```
+$ cargo build
+error: failed to run custom build command for `openssl v0.9.24`
+
+Caused by:
+  process didn't exit successfully: `/home/sverch/projects/rust-server/generated/target/debug/build/openssl-8d20803225a7b5a7/build-script-build` (exit code: 101)
+--- stderr
+thread 'main' panicked at 'Unable to detect OpenSSL version', /home/sverch/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.9.24/build.rs:16:14
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+Now I have another problem.  Looks like this error comes from an [unsupported
+openssl
+version](https://github.com/sfackler/rust-openssl/issues/987#issuecomment-419246104),
+but I just updated my system and I have the most recent openssl version (`1.1.1`
+as of this writing).
+
+Looking at the context around that error, I see this:
+
+```
+$ grep "Unable to detect" -B 20 -A 2 \
+    /home/sverch/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.9.24/build.rs
+use std::env;
+
+fn main() {
+    match env::var("DEP_OPENSSL_VERSION") {
+        Ok(ref v) if v == "101" => {
+            println!("cargo:rustc-cfg=ossl101");
+            println!("cargo:rustc-cfg=ossl10x");
+        }
+        Ok(ref v) if v == "102" => {
+            println!("cargo:rustc-cfg=ossl102");
+            println!("cargo:rustc-cfg=ossl10x");
+        }
+        Ok(ref v) if v == "110" => {
+            println!("cargo:rustc-cfg=ossl110");
+        }
+        _ => panic!("Unable to detect OpenSSL version"),
+    }
+```
+
+Well, looks like the version of this library that the generated code is using
+doesn't support the latest openssl.  So now I have to figure out which
+dependency is actually out of date.
+
+Because this generator generates the server as well as the client, it pulls in a
+lot more stuff, so I think this is going to be a bit more complicated.
+
+## Where Is It Supported?
+
+The error is coming from the
+[`rust-openssl`](https://github.com/sfackler/rust-openssl) library, so let's see
+what the latest version there actually supports.
+
+Unsurprisingly, it [does support my
+version](https://github.com/sfackler/rust-openssl/blob/master/openssl/build.rs#L33),
+so all I need to do is update all my packages to a version that pulls in a more
+recent `rust-openssl` version.
+
+Based on [this thread](https://github.com/rust-lang/cargo/issues/2082), it seems
+like `cargo install` might actually update the package versions in `Cargo.toml`,
+so maybe I can just update all packages in there to the latest versions and see
+what happens.
+
+```
+$ cargo install hyper
+    Updating crates.io index
+error: specified package `hyper v0.13.4` has no binaries
+```
+
+Ok, I probably don't actually understand this command.  From the help:
+
+> install     Install a Rust binary. Default location is $HOME/.cargo/bin
+
+All right, so that's not what I want.  Looks like there's an [extension that I
+can use](https://github.com/killercup/cargo-edit#cargo-upgrade).
+
+```
+$ cargo install cargo-edit
+...
+$ cargo upgrade
+    Updating 'https://github.com/rust-lang/crates.io-index' index
+openapi_client:
+...
+    Upgrading openssl v0.9.14 -> v0.10.28
+    Upgrading chrono v0.4 -> v0.4.11
+    Upgrading tokio-tls v0.1.3 -> v0.3.0
+...
+$ cargo build
+    Updating crates.io index
+error: failed to select a version for `tokio-tls`.
+    ... required by package `openapi_client v1.0.0 (/home/sverch/projects/rust-server/generated)`
+versions that meet the requirements `^0.3.0` are: 0.3.0
+
+the package `openapi_client` depends on `tokio-tls`, with features: `tokio-proto` but `tokio-tls` does not have these features.
+
+
+failed to select a version for `tokio-tls` which could resolve this conflict
+```
+
+Well, the good news is that my packages all got updated, but the bad news is
+that I have some compatibility issues.  The package throwing the error is under
+the "Server-specific" section, so let's try just removing `features =
+["tokio-proto"]` from that line:
+
+```
+$ cargo build
+...
+error: expected one of `<`, `where`, or `{`, found `AddClientIDToOpenIDConnectProviderResponse`
+  --> src/lib.rs:54:14
+   |
+54 | pub enum GET AddClientIDToOpenIDConnectProviderResponse {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected one of `<`, `where`, or `{`
+
+error: aborting due to previous error
+
+error: could not compile `openapi_client`.
+warning: build failed, waiting for other jobs to finish...
+error: build failed
+```
+
+Looking at [the rust enum
+documentation](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html),
+this does actually look wrong.  Let's put an underscore in there and in all
+other places that look like this to get
+`GET_AddClientIDToOpenIDConnectProviderResponse`.
+
+Well, I did that, and not only got a lot more errors, but I had to replace it in
+many places so I don't know what other unintended consequences it had.
+
+Let's figure out how this actually happened.  Looking at the [AWS OpenAPI
+definition](https://github.com/APIs-guru/openapi-directory/blob/master/APIs/amazonaws.com/iam/2010-05-08/openapi.yaml),
+I see:
+
+```
+paths:
+  '/#Action=AddClientIDToOpenIDConnectProvider':
+    get:
+      x-aws-operation-name: AddClientIDToOpenIDConnectProvider
+      operationId: GET AddClientIDToOpenIDConnectProvider
+```
+
+Well, that's where the space comes from.  From the [OpenAPI
+Spec](https://swagger.io/specification/) itself on the `operationId`:
+
+> Unique string used to identify the operation. The id MUST be unique among all
+> operations described in the API. The operationId value is case-sensitive.
+> Tools and libraries MAY use the operationId to uniquely identify an operation,
+> therefore, it is RECOMMENDED to follow common programming naming conventions.
+
+Having spaces in the name isn't a common programming convention, so I'll call
+that a bug in the AWS OpenAPI definition rather than a bug in the rust code
+generator.
+
+# Issues
+
+I made some progress, but I think I have some issues to file for now.
+
+First, I think I can file an issue for openssl 1.1.1 support in the rust code
+generator.  That is a legitimate problem, and who knows maybe they'll just
+update it.
+
+Second, I can ask for a fix to the `operationId` field in the project that
+generated these OpenAPI definitions.
+
+So [here is the issue about openssl
+support](https://github.com/OpenAPITools/openapi-generator/issues/5733) and
+[here is the issue about spaces in the `operationId`
+field](https://github.com/APIs-guru/aws2openapi/issues/33).
+
+# Next Time
+
+If those issues get fixed by the next time I look at this, that will at least
+reduce the number of things I have to debug.  The `rust-server` generator didn't
+work as flawlessly as I had hoped, but it's still possible that it works better
+than what I was doing before.  At least it does actually support XML, so we'll
+see!
