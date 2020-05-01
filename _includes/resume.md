@@ -3,8 +3,8 @@ Work Experience
 
 **Site Reliability Engineer,** Planetscale: January 2019 - Present
 
--   Automated deployment of Kubernetes, supporting infrastructure on AWS, GCP
--   Built monitoring stack and trained team in incident response
+-   Deployed Kubernetes infrastructure for a multi-cloud database as a service
+-   Connected monitoring and trained team in incident response
 -   Defined production readiness, ensured clear product status communication
 
 **Creator,** Cloudless: July 2018 - Present
