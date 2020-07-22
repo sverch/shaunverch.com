@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <!-- Jekyll stuff (everything else copied from reveal.js index -->
+        <title>
+        {% if page.title %}
+            {{ page.title }} | {{ site.title }}
+        {% else %}
+            {{ site.title }}
+        {% endif %}
+        </title>
+
+        <meta name="author" content="{{ site.author }}" />
+
+        <!-- Description -->
+        {% if page.description %}
+        <meta name="description" content="{{ page.description }}" />
+        {% else %}
+        <meta name="description" content="{{ site.description }}">
+        {% endif %}
+        <!-- End Jekyll stuff -->
+
+        <link rel="stylesheet" href="reveal.js/dist/reset.css">
+        <link rel="stylesheet" href="reveal.js/dist/reveal.css">
+        <link rel="stylesheet" href="reveal.js/dist/theme/black.css" id="theme">
+
+        <!-- Theme used for syntax highlighted code -->
+        <link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css" id="highlight-theme">
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                {{ content }}
+            </div>
+        </div>
+
+        <script src="reveal.js/dist/reveal.js"></script>
+        <script src="reveal.js/plugin/notes/notes.js"></script>
+        <script src="reveal.js/plugin/markdown/markdown.js"></script>
+        <script src="reveal.js/plugin/highlight/highlight.js"></script>
+        <script>
+            // More info about initialization & config:
+            // - https://revealjs.com/initialization/
+            // - https://revealjs.com/config/
+            Reveal.initialize({
+                hash: true,
+
+                // Learn about plugins: https://revealjs.com/plugins/
+                plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+            });
+        </script>
+    </body>
+</html>
