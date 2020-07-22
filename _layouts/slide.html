@@ -33,7 +33,26 @@
     <body>
         <div class="reveal">
             <div class="slides">
-                {{ content }}
+                {% for card in site.data.flashcards %}
+                <section>
+                    <section data-card="{{ card.word }}">
+                    <h1 class=card-word >{{ card.word }}</h1>
+                    <button class=say-fast onclick="window.sayInChinese('{{ card.word }}', 1)">Fast</button>
+                    <button class=say-slow onclick="window.sayInChinese('{{ card.word }}', 0.75)">Slow</button>
+                    </section>
+                    <section data-card="{{ card.word }}">
+                    <h1>{{ card.definition }}</h1>
+                    </section>
+                    <section data-card="{{ card.word }}">
+                    <h1>{{ card.sentence }}</h1>
+                    <button class=say-fast onclick="window.sayInChinese('{{ card.sentence }}', 1)">Fast</button>
+                    <button class=say-slow onclick="window.sayInChinese('{{ card.sentence }}', 0.75)">Slow</button>
+                    </section>
+                    <section data-card="{{ card.word }}">
+                    <h1>{{ card.translation }}</h1>
+                    </section>
+                </section>
+                {% endfor %}
             </div>
         </div>
 
