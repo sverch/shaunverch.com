@@ -23,12 +23,12 @@
         {% endif %}
         <!-- End Jekyll stuff -->
 
-        <link rel="stylesheet" href="reveal.js/dist/reset.css">
-        <link rel="stylesheet" href="reveal.js/dist/reveal.css">
-        <link rel="stylesheet" href="reveal.js/dist/theme/black.css" id="theme">
+        <link rel="stylesheet" href="{{ "/reveal.js/dist/reset.css" | prepend: site.baseurl }}">
+        <link rel="stylesheet" href="{{ "/reveal.js/dist/reveal.css" | prepend: site.baseurl }}">
+        <link rel="stylesheet" href="{{ "/reveal.js/dist/theme/black.css" id="theme" | prepend: site.baseurl }}">
 
         <!-- Theme used for syntax highlighted code -->
-        <link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css" id="highlight-theme">
+        <link rel="stylesheet" href="{{ "/reveal.js/plugin/highlight/monokai.css" id="highlight-theme" | prepend: site.baseurl }}">
     </head>
     <body>
         <div class="reveal">
