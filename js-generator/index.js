@@ -55,6 +55,7 @@ function sayInChinese(text, rate) {
 // for the say button.
 // https://stackoverflow.com/a/23296263
 window.sayInChinese = sayInChinese
+
 var pinyin = require("chinese-to-pinyin")
 
 // https://www.sitepoint.com/jquery-document-ready-plain-javascript/

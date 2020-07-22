@@ -1,0 +1,18 @@
+{
+  "name": "js-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "scripts": {
+    "browserify": "browserify index.js > ../assets/js/chinese-flashcard-utils.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^16.5.1",
+    "chinese-to-pinyin": "^1.3.1"
+  }
+}
