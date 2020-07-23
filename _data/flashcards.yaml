@@ -1,4 +1,148 @@
-- word: 今天
-  definition: Today
-  sentence: 今天我会喝水。
-  translation: Today I will drink water.
+- word: 进来
+  definition: come in
+  sentence: TODO
+  translation: TODO
+- word: 进去
+  definition: go in
+  sentence: TODO
+  translation: TODO
+- word: 请进
+  definition: please come in
+  sentence: TODO
+  translation: TODO
+- word: 上来
+  definition: come up
+  sentence: TODO
+  translation: TODO
+- word: 介绍
+  definition: introduce
+  sentence: 我给你介绍我妈妈.
+  translation: I introduce you to my mother.
+- word: 果汁
+  definition: fruit juice
+  sentence: TODO
+  translation: TODO
+- word: 红茶
+  definition: black tea
+  sentence: TODO
+  translation: TODO
+- word: 绿茶
+  definition: green tea
+  sentence: TODO
+  translation: TODO
+- word: 叔叔
+  definition: uncle
+  sentence: TODO
+  translation: TODO
+- word: 阿姨
+  definition: aunt
+  sentence: TODO
+  translation: TODO
+- word: 红包
+  definition: red packet (for gifts of money)
+  sentence: 这是给你们的红包。
+  translation: These red packets are for you.
+- word: 糖
+  definition: sugar, sweets
+  sentence: TODO
+  translation: TODO
+- word: 水果
+  definition: fruit
+  sentence: TODO
+  translation: TODO
+- word: 饮料
+  definition: drinks
+  sentence: TODO
+  translation: TODO
+- word: 地方
+  definition: size
+  sentence: 你家地方很大。
+  translation: Your house is big.
+- word: 参观
+  definition: look (as in taking a tour)
+  sentence: TODO
+  translation: TODO
+- word: 随便
+  definition: mindlessly (adj.)
+  sentence: 我随便看看。
+  translation: I'm just looking around (just browsing).
+- word: 喝
+  definition: drink
+  sentence: TODO
+  translation: TODO
+- word: 茶
+  definition: tea
+  sentence: TODO
+  translation: TODO
+- word: 果汁
+  definition: fruit juice
+  sentence: TODO
+  translation: TODO
+- word: 客厅
+  definition: living room
+  sentence: 我姐姐一进客厅，我就走。
+  translation: The moment my sister enters the living room, I leave.
+- word: 旁边
+  definition: next to, beside
+  sentence: 我旁边的人是我叔叔。
+  translation: The person next to me is my uncle.
+- word: 饭厅
+  definition: dining room
+  sentence: TODO
+  translation: TODO
+- word: 间
+  definition: (used for rooms); room
+  sentence: TODO
+  translation: TODO
+- word: 卧室
+  definition: bedroom
+  sentence: 我在我的卧室睡觉。
+  translation: I sleep in my bedroom.
+- word: 对面
+  definition: opposite
+  sentence: 对面的饭馆很好吃。
+  translation: The restaurant on the opposite side is very good.
+- word: 卫生间
+  definition: washroom, toilet
+  sentence: TODO
+  translation: TODO
+- word: 洗手间
+  definition: washroom, toilet
+  sentence: TODO
+  translation: TODO
+- word: 厕所
+  definition: washroom, toilet (informal)
+  sentence: TODO
+  translation: TODO
+- word: 香
+  definition: fragrant (smell or taste)
+  sentence: 纽约很香。
+  translation: New York is fragrant.
+- word: 正在
+  definition: in the process of
+  sentence: 我现在正在学中文。
+  translation: I'm learning chinese right now.
+- word: 拿
+  definition: to take, hold
+  sentence: 我在拿我的手机。
+  translation: I'm holding my cell phone.
+- word: 拿手菜
+  definition: signature dish
+  sentence: TODO
+  translation: TODO
+- word: 糖醋鱼
+  definition: sweet and sour fish
+  sentence: 糖醋鱼很好吃。
+  translation: Sweet and sour fish is tasty.
+- word: 厨房
+  definition: kitchen
+  sentence: 我有一间厨房。
+  translation: I have one kitchen.
+- word: 一边
+  definition: while
+  sentence: 我爸爸一边做他的拿手菜一边唱歌。
+  translation: My father sings while he cooks his signature dish.
+- word: 重要
+  definition: important
+  sentence: 春节是中国重要的节日。
+  translation: Chinese New Year is China's most important holiday.
