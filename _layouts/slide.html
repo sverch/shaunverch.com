@@ -33,7 +33,7 @@
     <body>
         <div class="reveal">
             <div class="slides">
-                {% for card in site.data.flashcards %}
+                {% for card in site.data[page.flashcards] %}
                 <section>
                     <section data-card="{{ card.word }}">
                     <h1 class=card-word >{{ card.word }}</h1>
