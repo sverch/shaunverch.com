@@ -32,6 +32,7 @@ plugins:
 
 header_pages:
   - amtrak.md
+  - amtrak-2021.md
   - resume.md
   - projects.md
 
