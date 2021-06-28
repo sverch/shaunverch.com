@@ -23,6 +23,14 @@ Jul 10 (12:55PM) - Jul 10 (3:59PM): 741 Capitol Corridor
 
 Jul 24 (9:10AM) - Jul 25 (3:05AM): 6 California Zephyr
 
-## Jul 31: Salt Lake City, UT to Chicago, IL
+## Jul 31: Salt Lake City, UT to Denver, CO
 
 Jul 31 (3:30AM) - Jul 31 (6:38PM): 6 California Zephyr
+
+## Aug 07: Denver, CO to Chicago, IL
+
+Aug 07 (7:10PM) - Aug 08 (2:50PM): 6 California Zephyr
+
+## Aug 08: Galesburg, IL to Kansas City, MO
+
+Aug 08 (5:26PM) - Aug 08 (10:00PM): 3 Southwest Chief
