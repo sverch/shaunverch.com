@@ -15,9 +15,30 @@ Jun 22 (2:15PM) - Jun 24 (10:25AM): 7 Empire Builder
 
 Jul 03 (9:45AM) - Jul 04 (6:15AM): 11 Coast Starlight
 
+Status: [Cancelled because of California/Oregon wild fires](https://www.oregonlive.com/business/2021/07/mount-shasta-fire-damage-forces-change-to-amtrak-coast-starlight-operations-until-mid-july.html).
+
+Instead:
+
+
+#### Jul 03: Seattle, WA to Portland, OR
+
+- Jul 03 (6:10PM) - Jul 03 (9:40PM): 507 Cascades
+
+#### Jul 03: Portland, OR to Eugene, OR
+
+- Jul 03 (9:55PM) - Jul 04 (12:15AM): 5507 Cascades Point Thruway Bus Service
+
+#### Jul 04: Eugene, OR to Chico, CA
+
+- Jul 04 (10:00AM) - Jul 04 (6:50PM): Greyhound
+
+#### Jul 05: Chico, CA to Sacramento CA
+
+- Jul 05 (6:55PM) - Jul 05 (9:10PM): Greyhound
+
 ## Jul 10: Sacramento, CA to San Jose, CA
 
-Jul 10 (12:55PM) - Jul 10 (3:59PM): 741 Capitol Corridor
+Jul 12 (11:55AM) - Jul 12 (3:05PM): 541 Capitol Corridor
 
 ## Jul 24: Emeryville, CA to Salt Lake City, UT
 
@@ -34,3 +55,15 @@ Aug 07 (7:10PM) - Aug 08 (2:50PM): 6 California Zephyr
 ## Aug 08: Galesburg, IL to Kansas City, MO
 
 Aug 08 (5:26PM) - Aug 08 (10:00PM): 3 Southwest Chief
+
+## Aug 09: Kansas City, MO to Jefferson City, MO
+
+Aug 09 (8:15AM) - Aug 09 (11:25AM): 314 Missouri River Runner
+
+## Aug 16: St. Louis, MO to Chicago, IL
+
+Aug 16 (3:00PM) - Aug 16 (8:40PM): 304 Lincoln Service
+
+## Aug 17: Chicago, IL to Washington, DC
+
+Aug 17 (6:40PM) - Aug 18 (1:05PM): 30 Capitol Limited
