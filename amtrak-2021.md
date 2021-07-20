@@ -60,6 +60,10 @@ Aug 08 (5:26PM) - Aug 08 (10:00PM): 3 Southwest Chief
 
 Aug 09 (8:15AM) - Aug 09 (11:25AM): 314 Missouri River Runner
 
+## Aug 16: Jefferson City, MO to St. Louis, MO
+
+Aug 16 (11:25AM) - Aug 16 (1:55PM): 314 Missouri River Runner
+
 ## Aug 16: St. Louis, MO to Chicago, IL
 
 Aug 16 (3:00PM) - Aug 16 (8:40PM): 304 Lincoln Service
