@@ -74,7 +74,7 @@ Aug 17 (8:40AM) - Aug 17 (1:15PM): 6021 Connecting Bus
 
 ## Aug 20: Houston, TX to New Orleans, LA
 
-Aug 20 (12:10PM) - Aug 21 (9:40AM): 2 Sunset Limited
+Aug 20 (12:10PM) - Aug 20 (9:40PM): 2 Sunset Limited
 
 ## Aug 21: New Orleans, LA to Washington, DC
 
