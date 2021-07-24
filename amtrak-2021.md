@@ -64,10 +64,18 @@ Aug 09 (8:15AM) - Aug 09 (11:25AM): 314 Missouri River Runner
 
 Aug 16 (11:25AM) - Aug 16 (1:55PM): 314 Missouri River Runner
 
-## Aug 16: St. Louis, MO to Chicago, IL
+## Aug 16: St. Louis, MO to Longview, TX
 
-Aug 16 (3:00PM) - Aug 16 (8:40PM): 304 Lincoln Service
+Aug 16 (7:55PM) - Aug 17 (8:28AM): 21 Texas Eagle
 
-## Aug 17: Chicago, IL to Washington, DC
+## Aug 17: Longview, TX to Houston, TX
 
-Aug 17 (6:40PM) - Aug 18 (1:05PM): 30 Capitol Limited
+Aug 17 (8:40AM) - Aug 17 (1:15PM): 6021 Connecting Bus
+
+## Aug 20: Houston, TX to New Orleans, LA
+
+Aug 20 (12:10PM) - Aug 21 (9:40AM): 2 Sunset Limited
+
+## Aug 21: New Orleans, LA to Washington, DC
+
+Aug 21 (9:15AM) - Aug 22 (1:45PM): 20 Crescent
