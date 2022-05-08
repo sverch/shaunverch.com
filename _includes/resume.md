@@ -1,7 +1,11 @@
 Work Experience
 ===============
 
-**Site Reliability Engineer,** U.S. Digital Service: December 2020 - Present
+**SRE Consultant,** Oso HQ: February 2022 - June 2022
+
+-   Supported initial launch of Oso Cloud, authorization as a service
+
+**Site Reliability Engineer,** U.S. Digital Service: December 2020 - February 2022
 
 -   Collected healthcare interoperability research in preparation for transition
 -   Helped orchestrate quiet vaccines.gov covid-19 vaccine search tool launch
@@ -12,15 +16,13 @@ Work Experience
 -   Built monitoring stack and trained team in incident response
 -   Defined production readiness, ensured clear product status communication
 
-**Creator,** Cloudless: July 2018 - Present
+**Creator,** Cloudless: July 2018 - November 2020
 
 -   Created Cloudless, a prototype for low level cloud portable deployment
 -   Deployed https://shaunverch.com, https://getcloudless.com using Cloudless
 
 **Site Reliability Engineer,** U.S. Digital Service: July 2016 - July 2018
 
--   Created roadmap to safely update 17 years of legacy code
--   Identified and remediated hundreds of critical security vulnerabilities
 -   Launched login.gov on AWS, Terraform, and Chef, now supporting 5 million users
 -   Supported quiet launch of qpp.cms.gov across 6 remote DevOps teams
 
@@ -43,21 +45,6 @@ Education
 
 - B.S. in Mathematics / Computer Science - Brown University, Providence, RI
 - M.Sc. in Computer Science - Brown University, Providence, RI
-
-University Coursework
-=====================
-
-Computer Security, Operating Systems, Computer Networks, Algorithms,
-Programming Languages, Embedded Microprocessor Design, Multiprocessor
-Synchronization, Abstract Algebra, Real Analysis, Complex Analysis,
-Number Theory, Cryptography
-
-University Projects
-===================
-
-- **Weenix** - Implemented small Unix-like OS and ported from Xen to x86 emulator
-- **Capriccio Threads** - Experimental work on light weight userspace threads library
-- **TCP over UDP** - Implemented the TCP/IP protocol using UDP as link layer
 
 Teaching Experience
 ===================
