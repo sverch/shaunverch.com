@@ -12,7 +12,7 @@ I'm not sure how commonly known the phrase ["Beltway Bandits"](https://en.wikipe
 
 To give a sense of the scale of this, in 2022 the Department of Defense plans to award [9 billion in cloud contracts](https://www.cnbc.com/2022/03/29/pentagon-will-award-up-to-9-billion-in-cloud-contracts-in-december.html). In trying to find out how that relates to total spending, I found [this exciting website](https://executivegov.com/articles/u-s-defense-budget-2022-how-much-does-the-united-states-spend-on-its-defense-budget/#How_much_of_the_budget_is_spent_on_defense), full of ads for how to win government contracts, that reports 2022 IT spending at $20.2 billion. [This site](https://datalab.usaspending.gov/federal-employees/) says that the DoD spends about $46 billion on personnel, so that's already 1/5 the total salary of all federal DoD employees, just on cloud contracts.
 
-I'm only using the DoD because the fact that the U.S. spends crazy amounts of money on defense makes for the flashiest news articles, but the dynamics and order of magnitude dollar amounts are the similar for other agencies.
+I'm only using the DoD because the fact that the U.S. spends crazy amounts of money on defense makes for the flashiest news articles, but the dynamics and order of magnitude dollar amounts are similar for other agencies.
 
 ## Part 2: Being A Government Employee Doesn't Pay Well
 
@@ -24,7 +24,7 @@ As of this writing, [$146,757.00](https://www.generalschedule.org/GS-15) is the 
 
 > The federal government has spent billions on information technology projects that failed or have performed poorly. These efforts often suffered from ineffective management. Agencies have also had cybersecurity failures affecting millions of people.
 
-[This other GAO report](https://www.gao.gov/products/gao-18-42) recommends involving Cheif Information Officers in contracting. Surely, the people that the GAO is recommending to oversee how billions of dollars are spent get paid something reasonable, right? Nope. [This site](https://www.payscale.com/research/US/Job=Chief_Information_Officer_(CIO\)/Salary) lists the average yearly salary around $169,548.
+[This other GAO report](https://www.gao.gov/products/gao-18-42) recommends involving Cheif Information Officers in contracting. Surely, the people that the GAO is recommending to oversee how billions of dollars are spent get paid something reasonable, right? Nope. [This site](https://www.payscale.com/research/US/Job=Chief_Information_Officer_(CIO)/Salary) lists the average yearly salary around $169,548.
 
 ## My Opinion: Pay Government Software Engineers More
 
