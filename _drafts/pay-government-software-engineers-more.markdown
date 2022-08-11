@@ -32,6 +32,6 @@ I think we should pay Federal Software Engineers, real software engineers who kn
 
 Of course, this isn't even touching on all the byzantine rules for hiring federal employees. We should fix that too of course, but let's at least make it so that qualified people would even want to apply first.
 
-Maybe this seems obvious, but "let's pay government employees more" is not an opinion I've seen anywhere, so I wanted to put it out in the world. Thanks for reading.
+Maybe this seems obvious, but I haven't seen this proposal anywhere, so I wanted to put it out in the world. Thanks for reading.
 
 For some of these sources I just did a quick search for what public data I could find, so if I got anything completely wrong, feel free to email blogcorrections20220815@shaunverch.com.
