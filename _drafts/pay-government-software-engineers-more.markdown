@@ -34,6 +34,8 @@ I think we should pay Federal Software Engineers, real software engineers who kn
 
 Of course, this isn't even touching on all the byzantine rules for hiring federal employees. We should fix that too of course, but let's at least make it so that qualified people would even want to apply first.
 
-Maybe this seems obvious, but I haven't seen this proposal anywhere, so I wanted to put it out in the world. Thanks for reading.
+Maybe this seems obvious, but I haven't seen this proposal anywhere, so I wanted to put it out in the world. I do have to give an honorable mention to the [USDS](https://www.usds.gov/) founders who negotiated hard to match private sector offers, up to the max government salary mentioned above. In some ways, this is a continuation of those ideas.
+
+Thanks for reading!
 
 For some of these sources I just did a quick search for what public data I could find, so if I got anything completely wrong (or if you would be interested in more posts), feel free to email blogfeedback20220815@shaunverch.com.
