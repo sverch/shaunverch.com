@@ -6,7 +6,7 @@ categories: government civic-tech
 ---
 I've spent a little over three years working in the federal government as a software engineer on an intervention team. I learned a lot in that time, and wanted to share one opinion that I came away with, and explain how I got there.
 
-The audience of this post is not people in civic tech, but rather people who are less familiar with these ideas. I believe that the scope of what civic tech can accomplish is defined by political realities and public perception, so I've been thinking a lot more about those things recently.
+The audience of this post is not people in civic tech (government or non profit style work), but rather people who are less familiar with these ideas. I believe that the scope of what civic tech can accomplish is defined by political realities and public perception, so I've been thinking a lot more about those things recently.
 
 ## Part 1: Being A Government Employee Doesn't Pay Well
 
