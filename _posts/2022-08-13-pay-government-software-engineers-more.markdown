@@ -36,4 +36,4 @@ I know that this isn't even touching on all the byzantine rules for hiring feder
 
 Maybe this all seems obvious, but I haven't come across this proposal in the public discourse, so I wanted to put it out in the world. Thanks for reading!
 
-For some of these sources I just did a quick search for what public data I could find, so if I got anything completely wrong (or if you would be interested in more posts), feel free to email blogfeedback20220815@shaunverch.com.
+For some of these sources I just did a quick search for what public data I could find, so if I got anything completely wrong (or if you would be interested in more posts), feel free to email blogfeedback20220813@shaunverch.com.
