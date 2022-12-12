@@ -64,20 +64,20 @@ Aug 09 (8:15AM) - Aug 09 (11:25AM): 314 Missouri River Runner
 
 Aug 16 (11:25AM) - Aug 16 (1:55PM): 314 Missouri River Runner
 
-**Instead of this trip, I went through Chicago on the way back, because the Covid Delta variant was very bad in Texas at the time**
+**NOTE: Instead of this trip, I went through Chicago on the way back, because the Covid Delta variant was very bad in Texas at the time**
 
-## Aug 16: St. Louis, MO to Longview, TX
+#### Aug 16: St. Louis, MO to Longview, TX
 
 Aug 16 (7:55PM) - Aug 17 (8:28AM): 21 Texas Eagle
 
-## Aug 17: Longview, TX to Houston, TX
+#### Aug 17: Longview, TX to Houston, TX
 
 Aug 17 (8:40AM) - Aug 17 (1:15PM): 6021 Connecting Bus
 
-## Aug 20: Houston, TX to New Orleans, LA
+#### Aug 20: Houston, TX to New Orleans, LA
 
 Aug 20 (12:10PM) - Aug 20 (9:40PM): 2 Sunset Limited
 
-## Aug 21: New Orleans, LA to Washington, DC
+#### Aug 21: New Orleans, LA to Washington, DC
 
 Aug 21 (9:15AM) - Aug 22 (1:45PM): 20 Crescent
