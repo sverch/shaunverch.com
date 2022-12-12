@@ -64,7 +64,7 @@ Aug 09 (8:15AM) - Aug 09 (11:25AM): 314 Missouri River Runner
 
 Aug 16 (11:25AM) - Aug 16 (1:55PM): 314 Missouri River Runner
 
-**NOTE: Instead of this trip, I went through Chicago on the way back, because the Covid Delta variant was very bad in Texas at the time**
+**NOTE: Instead of the rest of this trip, I went through Chicago on the way back, because the Covid Delta variant was very bad in Texas at the time**
 
 #### Aug 16: St. Louis, MO to Longview, TX
 
