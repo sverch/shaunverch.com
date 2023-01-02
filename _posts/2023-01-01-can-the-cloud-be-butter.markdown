@@ -1,5 +1,9 @@
-# Can The Cloud be Butter
-
+---
+layout: post
+title:  "Can The Cloud be Butter?"
+date:   2023-01-01 01:00:00 -0500
+categories: cloud butter
+---
 Can it be The Cloud, but Butter? That's my question. I don't know if this is
 possible, but I want to share my idea of Butter to see if other people also want
 this kind of Butter.
@@ -41,9 +45,10 @@ gives us a way to run virtual machines at bare metal speeds on linux.
 ## Wireguard Is Butter
 
 Now, we need a way to create private networks. Wireguard is Amazing, and also
-Butter. [This talk is great](https://www.youtube.com/watch?v=88GyLoZbDNw).
-[Check it
-out!](https://image.tmdb.org/t/p/original/w1ZY0VNEmhAV1t94NPbM23VwdjS.jpg)
+Butter. [This talk is one of the best tech talks I've ever seen, and I'd
+recommend checking it out!](https://www.youtube.com/watch?v=88GyLoZbDNw).
+
+![Check it out!](/assets/images/check-it-out.jpg){: width="50%" }
 
 ## Can they be Butter Together?
 
@@ -55,7 +60,7 @@ magical `wg0` interface, and all is good.
 
 But we don't want to tip off our unsuspecting Virtual Machines. We don't want
 them to get nervous about running on that ten year old hard drive we found in
-our parents' attic.
+our uncle's attic.
 
 So, how can we all become masters of disguise? How can we put on an `eth0`
 costume and appear to look like an innocent, totally real, physical, ethernet
@@ -67,6 +72,8 @@ The closest I've found to this level of organized crime is the [Cilium Wireguard
 plugin for transparent encryption on
 Kubernetes](https://docs.cilium.io/en/v1.12/gettingstarted/encryption-wireguard/),
 but I already told you, I don't want Kubernetes on my toast. Get outta here.
+
+I think there's some way to do this, but I don't have that rube goldberg machine handy at the moment.
 
 ## Why?
 
