@@ -9,7 +9,7 @@ for permissions to access another app on behalf of something or someone else.
 
 Here are some examples of apps that might use Oauth2:
 
-- A budget app that needs access to my bank account to view my transactions.
+- A budgeting app that needs access to my bank account to view my transactions.
 - A signature app that needs access to my cloud documents to sign them.
 - An app that uses my profile on another site as a way to prove my identity.
 
