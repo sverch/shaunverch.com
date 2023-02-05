@@ -74,8 +74,8 @@ environment](https://www.gnu.org/software/bash/manual/html_node/Environment.html
 so I don't have to copy them when I run this command:
 
 ```
-$ curl -X POST "https://github.com/login/oauth/access_token\
-?client_id=$OAUTH2_TEST_CLIENT_ID\
+$ curl -X POST "https://github.com/login/oauth/access_token" -d "\
+client_id=$OAUTH2_TEST_CLIENT_ID\
 &client_secret=$OAUTH2_TEST_CLIENT_SECRET\
 &code=<authorization_code>"
 ```
